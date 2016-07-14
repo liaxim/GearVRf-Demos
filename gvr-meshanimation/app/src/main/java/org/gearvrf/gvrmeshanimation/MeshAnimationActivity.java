@@ -12,4 +12,14 @@ public class MeshAnimationActivity extends GVRActivity {
 
         setMain(new MeshAnimationMain(this), "gvr.xml");
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
 }

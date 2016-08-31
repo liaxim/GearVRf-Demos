@@ -15,6 +15,7 @@
 
 package org.gearvrf.cubemap;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.concurrent.Future;
 
@@ -31,6 +32,7 @@ import org.gearvrf.scene_objects.GVRCubeSceneObject;
 import org.gearvrf.scene_objects.GVRCylinderSceneObject;
 import org.gearvrf.scene_objects.GVRSphereSceneObject;
 
+import android.os.SystemClock;
 import android.util.Log;
 
 public class CubemapMain extends GVRMain {
@@ -267,6 +269,22 @@ public class CubemapMain extends GVRMain {
 
     public void onTouch() {
         if (null != mGVRContext) {
+//            #ifdef GRID_54MM_80FOV_DOUBLET
+//            grid_54mm_80fov_doublet
+//            #endif
+//            #ifdef GRID_56MM_84FOV_DOUBLET
+//            grid_56mm_84fov_doublet
+//            #endif
+//            #ifdef GRID_58MM_88FOV_DOUBLET
+//            grid_58mm_88fov_doublet
+//            #endif
+//            #ifdef GRID_60MM_92FOV_DOUBLET
+//            grid_60mm_92fov_doublet
+//            #endif
+//            #ifdef GRID_64MM_101FOV_DOUBLET
+//            grid_64mm_101fov_doublet
+
+
 //            mGVRContext.runOnGlThread(new Runnable() {
 //                @Override
 //                public void run() {
@@ -278,6 +296,30 @@ public class CubemapMain extends GVRMain {
 //                }
 //            });
         }
+    }
+
+    int grid = 2;
+    float[] gridToArea = {
+            0.054f,
+            0.056f,
+            0.058f,
+            0.060f,
+            0.064f
+    };
+    public boolean processKeyEvent(int keyCode) {
+        switch (keyCode) {
+            case android.view.KeyEvent.KEYCODE_BUTTON_L1:
+            case android.view.KeyEvent.KEYCODE_VOLUME_UP: {
+                ++grid;
+                grid%=gridToArea.length;
+
+                mGVRContext.changeRenderDiameter(gridToArea[grid]);
+                SystemClock.sleep(1000);
+                mGVRContext.changeFreeParam1(grid);
+                return true;
+            }
+        }
+        return false;
     }
 }
 

@@ -18,6 +18,7 @@ package org.gearvrf.cubemap;
 import org.gearvrf.GVRActivity;
 
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 public class CubemapActivity extends GVRActivity {
@@ -31,11 +32,17 @@ public class CubemapActivity extends GVRActivity {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-            main.onTouch();
-            return true;
+    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
+        boolean handled = false;
+
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            handled = main.processKeyEvent(event.getKeyCode());
         }
-        return super.onTouchEvent(event);
+
+        if (handled) {
+            return true;
+        } else {
+            return super.dispatchKeyEvent(event);
+        }
     }
 }

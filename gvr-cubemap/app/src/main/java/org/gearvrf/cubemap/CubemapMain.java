@@ -52,7 +52,7 @@ public class CubemapMain extends GVRMain {
     //    (method C)
     // 4: surrounding cylinder using GVRCylinderSceneObject
     // 5: surrounding cube using six GVRSceneOjbects (quads)
-    private int mEnvironmentType = 2;
+    private int mEnvironmentType = 1;
 
     // Type of object for the reflective object
     // 0: reflective sphere using GVRSphereSceneObject
@@ -72,13 +72,13 @@ public class CubemapMain extends GVRMain {
         scene.setFrustumCulling(true);
 
         // Uncompressed cubemap texture
-        mFutureCubemapTexture = gvrContext.loadFutureCubemapTexture(new GVRAndroidResource(mGVRContext, R.raw.beach));
+        mFutureCubemapTexture = gvrContext.loadFutureCubemapTexture(new GVRAndroidResource(mGVRContext, R.raw.frog));
         mCubemapMaterial = new GVRMaterial(gvrContext, GVRMaterial.GVRShaderType.Cubemap.ID);
         mCubemapMaterial.setMainTexture(mFutureCubemapTexture);
 
         // Compressed cubemap texture
         final Future<GVRTexture> futureCompressedCubemapTexture = gvrContext.loadFutureCompressedCubemapTexture(new GVRAndroidResource(mGVRContext,
-                R.raw.museum));
+                R.raw.frog));
         mCompressedCubemapMaterial = new GVRMaterial(gvrContext, GVRMaterial.GVRShaderType.Cubemap.ID);
         mCompressedCubemapMaterial.setMainTexture(futureCompressedCubemapTexture);
 
@@ -267,16 +267,16 @@ public class CubemapMain extends GVRMain {
 
     public void onTouch() {
         if (null != mGVRContext) {
-            mGVRContext.runOnGlThread(new Runnable() {
-                @Override
-                public void run() {
-                    mGVRContext.getMainScene().clear();
-                    ++mEnvironmentType;
-                    mEnvironmentType %= MAX_ENVIRONMENTS;
-                    Log.i(TAG, "mEnvironmentType: " + mEnvironmentType);
-                    applyCubemap(mGVRContext.getMainScene());
-                }
-            });
+//            mGVRContext.runOnGlThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    mGVRContext.getMainScene().clear();
+//                    ++mEnvironmentType;
+//                    mEnvironmentType %= MAX_ENVIRONMENTS;
+//                    Log.i(TAG, "mEnvironmentType: " + mEnvironmentType);
+//                    applyCubemap(mGVRContext.getMainScene());
+//                }
+//            });
         }
     }
 }

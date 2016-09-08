@@ -34,6 +34,7 @@ import org.gearvrf.scene_objects.GVRSphereSceneObject;
 
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.KeyEvent;
 
 public class CubemapMain extends GVRMain {
 
@@ -106,6 +107,8 @@ public class CubemapMain extends GVRMain {
                         R.drawable.bottom)));
 
         applyCubemap(scene);
+
+        applyGrid0();
     }
 
     private void applyCubemap(GVRScene scene) {
@@ -298,28 +301,53 @@ public class CubemapMain extends GVRMain {
         }
     }
 
-    int grid = 2;
-    float[] gridToArea = {
-            0.054f,
-            0.056f,
-            0.058f,
-            0.060f,
-            0.064f
-    };
     public boolean processKeyEvent(int keyCode) {
         switch (keyCode) {
             case android.view.KeyEvent.KEYCODE_BUTTON_L1:
             case android.view.KeyEvent.KEYCODE_VOLUME_UP: {
-                ++grid;
-                grid%=gridToArea.length;
-
-                mGVRContext.changeRenderDiameter(gridToArea[grid]);
-                SystemClock.sleep(1000);
-                mGVRContext.changeFreeParam1(grid);
+                applyGrid0();
+                return true;
+            }
+            case KeyEvent.KEYCODE_VOLUME_DOWN: {
+                applyGrid1();
                 return true;
             }
         }
         return false;
+    }
+
+    void applyGrid0() {
+        try {
+            Method method = mGVRContext.getClass().getMethod("changeRenderDiameter", float.class);
+            method.invoke(mGVRContext, 0.062f);
+
+            method = mGVRContext.getClass().getMethod("changeFreeParam1", float.class);
+            method.invoke(mGVRContext, 0f);
+
+            method = mGVRContext.getClass().getMethod("setFovY", float.class);
+            method.invoke(mGVRContext, 86f);
+
+            mGVRContext.showToast("D62 G0 FOV86");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void applyGrid1() {
+        try {
+            Method method = mGVRContext.getClass().getMethod("changeRenderDiameter", float.class);
+            method.invoke(mGVRContext, 0.0626f);
+
+            method = mGVRContext.getClass().getMethod("changeFreeParam1", float.class);
+            method.invoke(mGVRContext, 1f);
+
+            method = mGVRContext.getClass().getMethod("setFovY", float.class);
+            method.invoke(mGVRContext, 87f);
+
+            mGVRContext.showToast("D626 G1 FOV87");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
 

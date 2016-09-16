@@ -62,6 +62,17 @@ public class SampleMain extends GVRScript {
 
     @Override
     public void onInit(GVRContext gvrContext) {
+        PlatformEntitlementCheck.start(gvrContext, "1058263010931183", new PlatformEntitlementCheck.ResultListener() {
+            @Override
+            public void onSuccess() {
+                Log.i("PlatformEntitlementCheck", "onSuccess");
+            }
+            @Override
+            public void onFailure() {
+                Log.i("PlatformEntitlementCheck", "onFailure");
+            }
+        });
+
         mGVRContext = gvrContext;
 
         GVRScene mainScene = mGVRContext.getNextMainScene();

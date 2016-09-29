@@ -18,6 +18,8 @@ package org.gearvrf.zoom360Photo;
 import android.os.Bundle;
 
 import org.gearvrf.GVRActivity;
+
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 public class Zoom360Photos extends GVRActivity
@@ -38,6 +40,21 @@ public class Zoom360Photos extends GVRActivity
     public boolean dispatchTouchEvent(MotionEvent event) {
         main.onTouchEvent(event);
         return super.dispatchTouchEvent(event);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
+        boolean handled = false;
+
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            handled = main.processKeyEvent(event.getKeyCode());
+        }
+
+        if (handled) {
+            return true;
+        } else {
+            return super.dispatchKeyEvent(event);
+        }
     }
 }
 

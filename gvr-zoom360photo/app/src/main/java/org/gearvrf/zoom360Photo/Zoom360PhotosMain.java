@@ -16,20 +16,25 @@
 package org.gearvrf.zoom360Photo;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 
 import org.gearvrf.GVRAndroidResource;
 import org.gearvrf.GVRContext;
+import org.gearvrf.GVRMaterial;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRCameraRig;
 import org.gearvrf.GVRPerspectiveCamera;
 import org.gearvrf.GVRMain;
+import org.gearvrf.GVRShaders;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.GVRSceneObject;
+import org.gearvrf.scene_objects.GVRCubeSceneObject;
 import org.gearvrf.scene_objects.GVRSphereSceneObject;
 import org.gearvrf.utility.Log;
 import org.gearvrf.zoom360Photo.FileBrowserUtils.FileBrowserListener;
 
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 public class Zoom360PhotosMain extends GVRMain implements FileBrowserListener {
@@ -41,6 +46,8 @@ public class Zoom360PhotosMain extends GVRMain implements FileBrowserListener {
     private boolean isBrowserShowing = false;
     private GVRContext gvrContext;
     private boolean turnOnBrowser;
+    private GVRSphereSceneObject sphereObject;
+    private GVRCubeSceneObject cubeObject;
 
     @Override
     public void onInit(GVRContext gvrContext) {
@@ -49,15 +56,17 @@ public class Zoom360PhotosMain extends GVRMain implements FileBrowserListener {
         GVRScene scene = gvrContext.getNextMainScene();
         cameraRig = scene.getMainCameraRig();
 
-        GVRSphereSceneObject sphereObject = null;
+        cubeObject = new GVRCubeSceneObject(gvrContext, false);
+        cubeObject.getTransform().setScale(20, 20, 20);
+        cubeObject.setEnable(false);
+        cubeObject.getRenderData().getMaterial().setShaderType(GVRMaterial.GVRShaderType.Cubemap.ID);
+        scene.addSceneObject(cubeObject);
 
-        // load texture
-        Future<GVRTexture> texture = gvrContext.loadFutureTexture(new GVRAndroidResource(gvrContext, R.raw.photosphere));
-
-        // create a sphere scene object with the specified texture and triangles facing inward (the 'false' argument) 
-        sphereObject = new GVRSphereSceneObject(gvrContext, 72, 144, false, texture);
+        // create a sphere scene object with the specified texture and triangles facing inward (the 'false' argument)
+        sphereObject = new GVRSphereSceneObject(gvrContext, 72, 144, false);
         sphereObject.setName("sphere");
         sphereObject.getTransform().setScale(20.0f, 20.0f, 20.0f);
+        sphereObject.setEnable(false);
 
         // add the scene object to the scene graph
         scene.addSceneObject(sphereObject);
@@ -120,24 +129,24 @@ public class Zoom360PhotosMain extends GVRMain implements FileBrowserListener {
             }
          break;
         case MotionEvent.ACTION_MOVE:
-            float currentX = event.getX();
-            float currentY = event.getY();
-            float dx = currentX - lastX;
-            float dy = currentY - lastY;
-            float distance = dx * dx + dy * dy;
-            if (Math.abs(distance) > MOVE_THRESHOLD) {
-                lastX = currentX;
-                lastY = currentY;
-                distance *= MOVE_SCALE_FACTOR;
-                if (dx > 0) {
-                    distance = -distance;
-                }
-
-                step += distance;
-                updateFovY();
-
-                isOnClick = false;
-            }
+//            float currentX = event.getX();
+//            float currentY = event.getY();
+//            float dx = currentX - lastX;
+//            float dy = currentY - lastY;
+//            float distance = dx * dx + dy * dy;
+//            if (Math.abs(distance) > MOVE_THRESHOLD) {
+//                lastX = currentX;
+//                lastY = currentY;
+//                distance *= MOVE_SCALE_FACTOR;
+//                if (dx > 0) {
+//                    distance = -distance;
+//                }
+//
+//                step += distance;
+//                updateFovY();
+//
+//                isOnClick = false;
+//            }
             break;
         default:
             break;
@@ -147,19 +156,75 @@ public class Zoom360PhotosMain extends GVRMain implements FileBrowserListener {
     @Override
     public void onFileSelected(String filePath) {
         try {
-            Future<GVRTexture> texture = gvrContext.loadFutureTexture(new GVRAndroidResource(filePath));
-            GVRSceneObject sphere = gvrContext.getMainScene().getSceneObjectByName("sphere");
-            gvrContext.getMainScene().removeSceneObject(sphere);
-            sphere = new GVRSphereSceneObject(gvrContext, 72, 144, false, texture);
-            sphere.setName("sphere");
-            sphere.getTransform().setScale(20, 20, 20);
-            gvrContext.getMainScene().addSceneObject(sphere);
+            if (filePath.toLowerCase().endsWith(".jpg") || filePath.toLowerCase().endsWith(".jpeg")) {
+                Future<GVRTexture> texture = gvrContext.loadFutureTexture(new GVRAndroidResource(filePath));
+                sphereObject.getRenderData().getMaterial().setMainTexture(texture);
+                cubeObject.setEnable(false);
+                sphereObject.setEnable(true);
+            } else if (filePath.toLowerCase().endsWith(".zip")) {
+                final Future<GVRTexture> texture = gvrContext.loadFutureCubemapTexture(new GVRAndroidResource(filePath));
+                cubeObject.getRenderData().getMaterial().setMainTexture(texture);
+                sphereObject.setEnable(false);
+                cubeObject.setEnable(true);
+            }
+
             fileBrowser.hide();
             cursor.hide();
             isBrowserShowing = false;
             turnOnBrowser = false;
         } catch(IOException e) {
             Log.e(TAG, "Could not open file: %s, Error:%s", filePath, e.getMessage());
+        }
+    }
+
+    boolean processKeyEvent(int keyCode) {
+        switch (keyCode) {
+            case android.view.KeyEvent.KEYCODE_BUTTON_L1:
+            case android.view.KeyEvent.KEYCODE_VOLUME_UP: {
+                applyGrid0();
+                return true;
+            }
+            case KeyEvent.KEYCODE_VOLUME_DOWN: {
+                applyGrid1();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void applyGrid0() {
+        final GVRContext gvr = getGVRContext();
+        try {
+            Method method = gvr.getClass().getMethod("changeRenderDiameter", float.class);
+            method.invoke(gvr, 0.062f);
+
+            method = gvr.getClass().getMethod("changeFreeParam1", float.class);
+            method.invoke(gvr, 0f);
+
+            method = gvr.getClass().getMethod("setFovY", float.class);
+            method.invoke(gvr, 86f);
+
+            gvr.showToast("D62 G0 FOV86");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void applyGrid1() {
+        final GVRContext gvr = getGVRContext();
+        try {
+            Method method = gvr.getClass().getMethod("changeRenderDiameter", float.class);
+            method.invoke(gvr, 0.0626f);
+
+            method = gvr.getClass().getMethod("changeFreeParam1", float.class);
+            method.invoke(gvr, 1f);
+
+            method = gvr.getClass().getMethod("setFovY", float.class);
+            method.invoke(gvr, 87f);
+
+            gvr.showToast("D626 G1 FOV87");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

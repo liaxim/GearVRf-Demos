@@ -23,6 +23,7 @@ import org.gearvrf.GVRCameraRig;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRAndroidResource;
+import org.gearvrf.GVRTransform;
 import org.gearvrf.scene_objects.GVRViewSceneObject;
 import org.gearvrf.scene_objects.GVRModelSceneObject;
 import org.gearvrf.scene_objects.view.GVRFrameLayout;
@@ -216,13 +217,9 @@ public class FileBrowserUtils {
                         return true;
                     }
                     
-                    if(
-                        (name.toLowerCase().endsWith(".png")) ||
-                        (name.toLowerCase().endsWith(".jpg")) ||
-                        (name.toLowerCase().endsWith(".jpeg")) ||
-                        (name.toLowerCase().endsWith(".bmp")) ||
-                        (name.toLowerCase().endsWith(".webp"))
-                        ) {
+                    if((name.toLowerCase().endsWith(".zip")) ||
+                       (name.toLowerCase().endsWith(".jpg")) ||
+                       (name.toLowerCase().endsWith(".jpeg"))) {
                         return true;
                     }
 

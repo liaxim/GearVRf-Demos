@@ -157,15 +157,35 @@ public class Zoom360PhotosMain extends GVRMain implements FileBrowserListener {
     public void onFileSelected(String filePath) {
         try {
             if (filePath.toLowerCase().endsWith(".jpg") || filePath.toLowerCase().endsWith(".jpeg")) {
-                Future<GVRTexture> texture = gvrContext.loadFutureTexture(new GVRAndroidResource(filePath));
-                sphereObject.getRenderData().getMaterial().setMainTexture(texture);
-                cubeObject.setEnable(false);
-                sphereObject.setEnable(true);
+                gvrContext.loadTexture(new GVRAndroidResource.TextureCallback() {
+                    @Override
+                    public boolean stillWanted(GVRAndroidResource gvrAndroidResource) {
+                        return true;
+                    }
+
+                    @Override
+                    public void loaded(GVRTexture texture, GVRAndroidResource gvrAndroidResource) {
+                        sphereObject.getRenderData().getMaterial().setMainTexture(texture);
+                        cubeObject.setEnable(false);
+                        sphereObject.setEnable(true);
+                    }
+
+                    @Override
+                    public void failed(Throwable throwable, GVRAndroidResource gvrAndroidResource) {
+                        Log.e(TAG, "texture load failed");
+                    }
+                }, new GVRAndroidResource(filePath));
             } else if (filePath.toLowerCase().endsWith(".zip")) {
-                final Future<GVRTexture> texture = gvrContext.loadFutureCubemapTexture(new GVRAndroidResource(filePath));
-                cubeObject.getRenderData().getMaterial().setMainTexture(texture);
-                sphereObject.setEnable(false);
-                cubeObject.setEnable(true);
+                Future<GVRTexture> future = gvrContext.loadFutureCubemapTexture(new GVRAndroidResource(filePath));
+                final GVRTexture texture = future.get();
+                gvrContext.runOnGlThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        cubeObject.getRenderData().getMaterial().setMainTexture(texture);
+                        sphereObject.setEnable(false);
+                        cubeObject.setEnable(true);
+                    }
+                });
             }
 
             fileBrowser.hide();
@@ -174,6 +194,8 @@ public class Zoom360PhotosMain extends GVRMain implements FileBrowserListener {
             turnOnBrowser = false;
         } catch(IOException e) {
             Log.e(TAG, "Could not open file: %s, Error:%s", filePath, e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to load cubemap texture");
         }
     }
 

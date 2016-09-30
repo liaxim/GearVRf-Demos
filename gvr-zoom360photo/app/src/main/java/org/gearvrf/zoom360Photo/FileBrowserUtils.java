@@ -135,10 +135,15 @@ public class FileBrowserUtils {
                 if(msg.what == MOTION_EVENT) {
                     MotionEvent motionEvent = (MotionEvent) msg.obj;
 
-                    frameLayout.dispatchTouchEvent(motionEvent);
-                    frameLayout.invalidate();
-                    frameLayout.requestLayout();
-                    motionEvent.recycle();
+                    try {
+                        frameLayout.dispatchTouchEvent(motionEvent);
+                        frameLayout.invalidate();
+                        frameLayout.requestLayout();
+                    } catch (final Exception exc) {
+
+                    } finally {
+                        motionEvent.recycle();
+                    }
                 }
             }
         };

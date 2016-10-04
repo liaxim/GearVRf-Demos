@@ -51,19 +51,27 @@ public class Main extends GVRMain {
     @Override
     public void onInit(final GVRContext gvrContext) {
         this.gvrContext = gvrContext;
+
         AccessibilityTexture.getInstance(gvrContext);
         cursor = GazeCursorSceneObject.getInstance(gvrContext);
         manager = new AccessibilityManager(gvrContext);
-        ShortcutMenu shortcutMenu = createShortcut();
+        final ShortcutMenu shortcutMenu = createShortcut();
+
         accessibilityScene = new AccessibilityScene(gvrContext, gvrContext.getNextMainScene(), shortcutMenu);
 
-        createPedestalObject();
-        createDinossaur();
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                createPedestalObject();
 
-        gvrContext.getNextMainScene().addSceneObject(shortcutMenu);
-        gvrContext.getNextMainScene().getMainCameraRig().addChildObject(cursor);
-        gvrContext.getNextMainScene().addSceneObject(createSkybox());
+                createDinossaur();
 
+                gvrContext.getNextMainScene().addSceneObject(shortcutMenu);
+                gvrContext.getNextMainScene().getMainCameraRig().addChildObject(cursor);
+                gvrContext.getNextMainScene().addSceneObject(createSkybox());
+            }
+        };
+        gvrContext.runOnGlThread(r);
     }
 
     private ShortcutMenu createShortcut() {

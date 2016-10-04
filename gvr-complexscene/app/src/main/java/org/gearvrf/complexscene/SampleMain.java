@@ -25,7 +25,6 @@ import org.gearvrf.GVRMesh;
 import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
-import org.gearvrf.GVRScript;
 
 import java.io.IOException;
 
@@ -35,7 +34,7 @@ public class SampleMain extends GVRMain {
     private ColorShader mColorShader;
 
     @Override
-    public GVRScript.SplashMode getSplashMode() {
+    public GVRMain.SplashMode getSplashMode() {
         return SplashMode.NONE;
     }
 

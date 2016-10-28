@@ -64,6 +64,8 @@ import java.io.IOException;
 
 public class Minimal360VideoActivity extends GVRActivity {
 
+    Minimal360Video main;
+
     /**
      * Called when the activity is first created.
      */
@@ -71,16 +73,15 @@ public class Minimal360VideoActivity extends GVRActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        main = new Minimal360Video();
+
         if (!USE_EXO_PLAYER) {
             videoSceneObjectPlayer = makeMediaPlayer();
         } else {
             videoSceneObjectPlayer = makeExoPlayer();
         }
 
-        if (null != videoSceneObjectPlayer) {
-            final Minimal360Video main = new Minimal360Video(videoSceneObjectPlayer);
-            setMain(main, "gvr.xml");
-        }
+        setMain(main, "gvr.xml");
     }
 
     @Override
@@ -138,248 +139,491 @@ public class Minimal360VideoActivity extends GVRActivity {
     }
 
     Handler mainHandler;
+
     private GVRVideoSceneObjectPlayer<ExoPlayer> makeExoPlayer() {
+        mainHandler = new Handler();
         final ExoPlayer player = ExoPlayer.Factory.newInstance(2);
 
         MediaPresentationDescriptionParser parser = new MediaPresentationDescriptionParser();
         final String userAgent = "GVRF 3.x";
         final Context context = this;
         DefaultUriDataSource manifestDataSource = new DefaultUriDataSource(context, userAgent);
-        final String url = "http://www.youtube.com/api/manifest/dash/id/bf5bb2419360daf1/source/youtube?as=fmp4_audio_clear,fmp4_sd_hd_clear&sparams=ip,ipbits,expire,source,id,as&ip=0.0.0.0&ipbits=0&expire=19000000000&signature=51AF5F39AB0CEC3E5497CD9C900EBFEAECCCB5C7.8506521BFC350652163895D4C26DEE124209AA9E&key=ik0";
-        ManifestFetcher manifestFetcher = new ManifestFetcher<>(url, manifestDataSource, parser);
-
-        mainHandler = new Handler();
-        DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, new BandwidthMeter.EventListener() {
+        //final String url = "http://www.youtube.com/api/manifest/dash/id/bf5bb2419360daf1/source/youtube?as=fmp4_audio_clear,fmp4_sd_hd_clear&sparams=ip,ipbits,expire,source,id,as&ip=0.0.0.0&ipbits=0&expire=19000000000&signature=51AF5F39AB0CEC3E5497CD9C900EBFEAECCCB5C7.8506521BFC350652163895D4C26DEE124209AA9E&key=ik0";
+        final String url = "http://yt-dash-mse-test.commondatastorage.googleapis.com/media/feelings_vp9-20130806-manifest.mpd";
+        final ManifestFetcher manifestFetcher = new ManifestFetcher<>(url, manifestDataSource, parser);
+        manifestFetcher.singleLoad(mainHandler.getLooper(), new ManifestFetcher.ManifestCallback() {
             @Override
-            public void onBandwidthSample(int elapsedMs, long bytes, long bitrate) {
-            }
-        });
+            public void onSingleManifest(Object manifest) {
+                Log.i("mmarinov", "onSingleManifest");
 
-        DataSource videoDataSource = new DefaultUriDataSource(context, userAgent);
-        ChunkSource videoChunkSource = new DashChunkSource(manifestFetcher,
-                DefaultDashTrackSelector.newVideoInstance(context, true, false),
-                videoDataSource, new FormatEvaluator.AdaptiveEvaluator(bandwidthMeter), 30000,
-                0L, mainHandler, new DashChunkSource.EventListener() {
-            @Override
-            public void onAvailableRangeChanged(int sourceId, TimeRange availableRange) {
-
-            }
-        }, 0);
-        ChunkSampleSource videoSampleSource = new ChunkSampleSource(videoChunkSource,
-                new DefaultLoadControl(new DefaultAllocator(64 * 1024)),
-                200 * 64 * 1024, mainHandler, new ChunkSampleSource.EventListener() {
-            @Override
-            public void onLoadStarted(int sourceId, long length, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs) {
-
-            }
-
-            @Override
-            public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
-
-            }
-
-            @Override
-            public void onLoadCanceled(int sourceId, long bytesLoaded) {
-
-            }
-
-            @Override
-            public void onLoadError(int sourceId, IOException e) {
-
-            }
-
-            @Override
-            public void onUpstreamDiscarded(int sourceId, long mediaStartTimeMs, long mediaEndTimeMs) {
-
-            }
-
-            @Override
-            public void onDownstreamFormatChanged(int sourceId, Format format, int trigger, long mediaTimeMs) {
-
-            }
-        }, 0);
-        final TrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(context, videoSampleSource,
-                MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT, 5000,
-                null, true, mainHandler, new MediaCodecVideoTrackRenderer.EventListener() {
-            @Override
-            public void onDroppedFrames(int count, long elapsed) {
-
-            }
-
-            @Override
-            public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-
-            }
-
-            @Override
-            public void onDrawnToSurface(Surface surface) {
-
-            }
-
-            @Override
-            public void onDecoderInitializationError(MediaCodecTrackRenderer.DecoderInitializationException e) {
-
-            }
-
-            @Override
-            public void onCryptoError(MediaCodec.CryptoException e) {
-
-            }
-
-            @Override
-            public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs, long initializationDurationMs) {
-
-            }
-        }, 50);
-
-        // Build the audio renderer.
-        DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
-        ChunkSource audioChunkSource = new DashChunkSource(manifestFetcher,
-                DefaultDashTrackSelector.newAudioInstance(), audioDataSource, null, 30000,
-                0L, mainHandler, new DashChunkSource.EventListener() {
-            @Override
-            public void onAvailableRangeChanged(int sourceId, TimeRange availableRange) {
-
-            }
-        }, 1);
-        ChunkSampleSource audioSampleSource = new ChunkSampleSource(audioChunkSource,
-                new DefaultLoadControl(new DefaultAllocator(64 * 1024)),
-                54 * 64 * 1024, mainHandler, new ChunkSampleSource.EventListener() {
-            @Override
-            public void onLoadStarted(int sourceId, long length, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs) {
-
-            }
-
-            @Override
-            public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
-
-            }
-
-            @Override
-            public void onLoadCanceled(int sourceId, long bytesLoaded) {
-
-            }
-
-            @Override
-            public void onLoadError(int sourceId, IOException e) {
-
-            }
-
-            @Override
-            public void onUpstreamDiscarded(int sourceId, long mediaStartTimeMs, long mediaEndTimeMs) {
-
-            }
-
-            @Override
-            public void onDownstreamFormatChanged(int sourceId, Format format, int trigger, long mediaTimeMs) {
-
-            }
-        }, 1);
-        TrackRenderer audioRenderer = new MediaCodecAudioTrackRenderer(audioSampleSource,
-                MediaCodecSelector.DEFAULT, null, true, mainHandler, new MediaCodecAudioTrackRenderer.EventListener() {
-            @Override
-            public void onAudioTrackInitializationError(AudioTrack.InitializationException e) {
-
-            }
-
-            @Override
-            public void onAudioTrackWriteError(AudioTrack.WriteException e) {
-
-            }
-
-            @Override
-            public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
-
-            }
-
-            @Override
-            public void onDecoderInitializationError(MediaCodecTrackRenderer.DecoderInitializationException e) {
-
-            }
-
-            @Override
-            public void onCryptoError(MediaCodec.CryptoException e) {
-
-            }
-
-            @Override
-            public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs, long initializationDurationMs) {
-
-            }
-        },
-                AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
-
-//        final AssetDataSource dataSource = new AssetDataSource(this);
-//        final ExtractorSampleSource sampleSource = new ExtractorSampleSource(Uri.parse("asset:///videos_s_3.mp4"),
-//                dataSource, new DefaultAllocator(64 * 1024), 64 * 1024 * 256);
-//
-//        final MediaCodecVideoTrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(this, sampleSource,
-//                MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT);
-//        final MediaCodecAudioTrackRenderer audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
-//                MediaCodecSelector.DEFAULT);
-        player.prepare(videoRenderer, audioRenderer);
-
-        return new GVRVideoSceneObjectPlayer<ExoPlayer>() {
-            @Override
-            public ExoPlayer getPlayer() {
-                return player;
-            }
-
-            @Override
-            public void setSurface(final Surface surface) {
-                player.addListener(new ExoPlayer.Listener() {
+                DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, new BandwidthMeter.EventListener() {
                     @Override
-                    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-                        switch (playbackState) {
-                            case ExoPlayer.STATE_BUFFERING:
-                                break;
-                            case ExoPlayer.STATE_ENDED:
-                                player.seekTo(0);
-                                break;
-                            case ExoPlayer.STATE_IDLE:
-                                break;
-                            case ExoPlayer.STATE_PREPARING:
-                                break;
-                            case ExoPlayer.STATE_READY:
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    @Override
-                    public void onPlayWhenReadyCommitted() {
-                        surface.release();
-                    }
-
-                    @Override
-                    public void onPlayerError(ExoPlaybackException error) {
+                    public void onBandwidthSample(int elapsedMs, long bytes, long bitrate) {
                     }
                 });
 
-                player.sendMessage(videoRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
+                DataSource videoDataSource = new DefaultUriDataSource(context, userAgent);
+                ChunkSource videoChunkSource = new DashChunkSource(manifestFetcher,
+                        DefaultDashTrackSelector.newVideoInstance(context, true, false),
+                        videoDataSource, new FormatEvaluator.AdaptiveEvaluator(bandwidthMeter), 30000,
+                        0L, mainHandler, new DashChunkSource.EventListener() {
+                    @Override
+                    public void onAvailableRangeChanged(int sourceId, TimeRange availableRange) {
+
+                    }
+                }, 0);
+                ChunkSampleSource videoSampleSource = new ChunkSampleSource(videoChunkSource,
+                        new DefaultLoadControl(new DefaultAllocator(64 * 1024)),
+                        200 * 64 * 1024, mainHandler, new ChunkSampleSource.EventListener() {
+                    @Override
+                    public void onLoadStarted(int sourceId, long length, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs) {
+
+                    }
+
+                    @Override
+                    public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
+
+                    }
+
+                    @Override
+                    public void onLoadCanceled(int sourceId, long bytesLoaded) {
+
+                    }
+
+                    @Override
+                    public void onLoadError(int sourceId, IOException e) {
+
+                    }
+
+                    @Override
+                    public void onUpstreamDiscarded(int sourceId, long mediaStartTimeMs, long mediaEndTimeMs) {
+
+                    }
+
+                    @Override
+                    public void onDownstreamFormatChanged(int sourceId, Format format, int trigger, long mediaTimeMs) {
+
+                    }
+                }, 0);
+                final TrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(context, videoSampleSource,
+                        MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT, 5000,
+                        null, true, mainHandler, new MediaCodecVideoTrackRenderer.EventListener() {
+                    @Override
+                    public void onDroppedFrames(int count, long elapsed) {
+
+                    }
+
+                    @Override
+                    public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
+
+                    }
+
+                    @Override
+                    public void onDrawnToSurface(Surface surface) {
+
+                    }
+
+                    @Override
+                    public void onDecoderInitializationError(MediaCodecTrackRenderer.DecoderInitializationException e) {
+
+                    }
+
+                    @Override
+                    public void onCryptoError(MediaCodec.CryptoException e) {
+
+                    }
+
+                    @Override
+                    public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs, long initializationDurationMs) {
+
+                    }
+                }, 50);
+
+                // Build the audio renderer.
+                DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+                ChunkSource audioChunkSource = new DashChunkSource(manifestFetcher,
+                        DefaultDashTrackSelector.newAudioInstance(), audioDataSource, null, 30000,
+                        0L, mainHandler, new DashChunkSource.EventListener() {
+                    @Override
+                    public void onAvailableRangeChanged(int sourceId, TimeRange availableRange) {
+
+                    }
+                }, 1);
+                ChunkSampleSource audioSampleSource = new ChunkSampleSource(audioChunkSource,
+                        new DefaultLoadControl(new DefaultAllocator(64 * 1024)),
+                        54 * 64 * 1024, mainHandler, new ChunkSampleSource.EventListener() {
+                    @Override
+                    public void onLoadStarted(int sourceId, long length, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs) {
+
+                    }
+
+                    @Override
+                    public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
+
+                    }
+
+                    @Override
+                    public void onLoadCanceled(int sourceId, long bytesLoaded) {
+
+                    }
+
+                    @Override
+                    public void onLoadError(int sourceId, IOException e) {
+
+                    }
+
+                    @Override
+                    public void onUpstreamDiscarded(int sourceId, long mediaStartTimeMs, long mediaEndTimeMs) {
+
+                    }
+
+                    @Override
+                    public void onDownstreamFormatChanged(int sourceId, Format format, int trigger, long mediaTimeMs) {
+
+                    }
+                }, 1);
+                TrackRenderer audioRenderer = new MediaCodecAudioTrackRenderer(audioSampleSource,
+                        MediaCodecSelector.DEFAULT, null, true, mainHandler, new MediaCodecAudioTrackRenderer.EventListener() {
+                    @Override
+                    public void onAudioTrackInitializationError(AudioTrack.InitializationException e) {
+
+                    }
+
+                    @Override
+                    public void onAudioTrackWriteError(AudioTrack.WriteException e) {
+
+                    }
+
+                    @Override
+                    public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
+
+                    }
+
+                    @Override
+                    public void onDecoderInitializationError(MediaCodecTrackRenderer.DecoderInitializationException e) {
+
+                    }
+
+                    @Override
+                    public void onCryptoError(MediaCodec.CryptoException e) {
+
+                    }
+
+                    @Override
+                    public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs, long initializationDurationMs) {
+
+                    }
+                },
+                        AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
+
+                player.prepare(videoRenderer, audioRenderer);
+
+                try {
+                    main.setPlayer(new GVRVideoSceneObjectPlayer<ExoPlayer>() {
+                        @Override
+                        public ExoPlayer getPlayer() {
+                            return player;
+                        }
+
+                        @Override
+                        public void setSurface(final Surface surface) {
+                            player.addListener(new ExoPlayer.Listener() {
+                                @Override
+                                public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                                    switch (playbackState) {
+                                        case ExoPlayer.STATE_BUFFERING:
+                                            break;
+                                        case ExoPlayer.STATE_ENDED:
+                                            player.seekTo(0);
+                                            break;
+                                        case ExoPlayer.STATE_IDLE:
+                                            break;
+                                        case ExoPlayer.STATE_PREPARING:
+                                            break;
+                                        case ExoPlayer.STATE_READY:
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+
+                                @Override
+                                public void onPlayWhenReadyCommitted() {
+                                    surface.release();
+                                }
+
+                                @Override
+                                public void onPlayerError(ExoPlaybackException error) {
+                                }
+                            });
+
+                            player.sendMessage(videoRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
+                        }
+
+                        @Override
+                        public void release() {
+                            player.release();
+                        }
+
+                        @Override
+                        public boolean canReleaseSurfaceImmediately() {
+                            return false;
+                        }
+
+                        @Override
+                        public void pause() {
+                            player.setPlayWhenReady(false);
+                        }
+
+                        @Override
+                        public void start() {
+                            player.setPlayWhenReady(true);
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
-            public void release() {
-                player.release();
+            public void onSingleManifestError(IOException e) {
+                Log.i("mmarinov", "onSingleManifestError");
             }
+        });
+        Object o = manifestFetcher.getManifest();
+        return null;
 
-            @Override
-            public boolean canReleaseSurfaceImmediately() {
-                return false;
-            }
-
-            @Override
-            public void pause() {
-                player.setPlayWhenReady(false);
-            }
-
-            @Override
-            public void start() {
-                player.setPlayWhenReady(true);
-            }
-        };
+//        DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, new BandwidthMeter.EventListener() {
+//            @Override
+//            public void onBandwidthSample(int elapsedMs, long bytes, long bitrate) {
+//            }
+//        });
+//
+//        DataSource videoDataSource = new DefaultUriDataSource(context, userAgent);
+//        ChunkSource videoChunkSource = new DashChunkSource(manifestFetcher,
+//                DefaultDashTrackSelector.newVideoInstance(context, true, false),
+//                videoDataSource, new FormatEvaluator.AdaptiveEvaluator(bandwidthMeter), 30000,
+//                0L, mainHandler, new DashChunkSource.EventListener() {
+//            @Override
+//            public void onAvailableRangeChanged(int sourceId, TimeRange availableRange) {
+//
+//            }
+//        }, 0);
+//        ChunkSampleSource videoSampleSource = new ChunkSampleSource(videoChunkSource,
+//                new DefaultLoadControl(new DefaultAllocator(64 * 1024)),
+//                200 * 64 * 1024, mainHandler, new ChunkSampleSource.EventListener() {
+//            @Override
+//            public void onLoadStarted(int sourceId, long length, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs) {
+//
+//            }
+//
+//            @Override
+//            public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
+//
+//            }
+//
+//            @Override
+//            public void onLoadCanceled(int sourceId, long bytesLoaded) {
+//
+//            }
+//
+//            @Override
+//            public void onLoadError(int sourceId, IOException e) {
+//
+//            }
+//
+//            @Override
+//            public void onUpstreamDiscarded(int sourceId, long mediaStartTimeMs, long mediaEndTimeMs) {
+//
+//            }
+//
+//            @Override
+//            public void onDownstreamFormatChanged(int sourceId, Format format, int trigger, long mediaTimeMs) {
+//
+//            }
+//        }, 0);
+//        final TrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(context, videoSampleSource,
+//                MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT, 5000,
+//                null, true, mainHandler, new MediaCodecVideoTrackRenderer.EventListener() {
+//            @Override
+//            public void onDroppedFrames(int count, long elapsed) {
+//
+//            }
+//
+//            @Override
+//            public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
+//
+//            }
+//
+//            @Override
+//            public void onDrawnToSurface(Surface surface) {
+//
+//            }
+//
+//            @Override
+//            public void onDecoderInitializationError(MediaCodecTrackRenderer.DecoderInitializationException e) {
+//
+//            }
+//
+//            @Override
+//            public void onCryptoError(MediaCodec.CryptoException e) {
+//
+//            }
+//
+//            @Override
+//            public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs, long initializationDurationMs) {
+//
+//            }
+//        }, 50);
+//
+//        // Build the audio renderer.
+//        DataSource audioDataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+//        ChunkSource audioChunkSource = new DashChunkSource(manifestFetcher,
+//                DefaultDashTrackSelector.newAudioInstance(), audioDataSource, null, 30000,
+//                0L, mainHandler, new DashChunkSource.EventListener() {
+//            @Override
+//            public void onAvailableRangeChanged(int sourceId, TimeRange availableRange) {
+//
+//            }
+//        }, 1);
+//        ChunkSampleSource audioSampleSource = new ChunkSampleSource(audioChunkSource,
+//                new DefaultLoadControl(new DefaultAllocator(64 * 1024)),
+//                54 * 64 * 1024, mainHandler, new ChunkSampleSource.EventListener() {
+//            @Override
+//            public void onLoadStarted(int sourceId, long length, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs) {
+//
+//            }
+//
+//            @Override
+//            public void onLoadCompleted(int sourceId, long bytesLoaded, int type, int trigger, Format format, long mediaStartTimeMs, long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs) {
+//
+//            }
+//
+//            @Override
+//            public void onLoadCanceled(int sourceId, long bytesLoaded) {
+//
+//            }
+//
+//            @Override
+//            public void onLoadError(int sourceId, IOException e) {
+//
+//            }
+//
+//            @Override
+//            public void onUpstreamDiscarded(int sourceId, long mediaStartTimeMs, long mediaEndTimeMs) {
+//
+//            }
+//
+//            @Override
+//            public void onDownstreamFormatChanged(int sourceId, Format format, int trigger, long mediaTimeMs) {
+//
+//            }
+//        }, 1);
+//        TrackRenderer audioRenderer = new MediaCodecAudioTrackRenderer(audioSampleSource,
+//                MediaCodecSelector.DEFAULT, null, true, mainHandler, new MediaCodecAudioTrackRenderer.EventListener() {
+//            @Override
+//            public void onAudioTrackInitializationError(AudioTrack.InitializationException e) {
+//
+//            }
+//
+//            @Override
+//            public void onAudioTrackWriteError(AudioTrack.WriteException e) {
+//
+//            }
+//
+//            @Override
+//            public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
+//
+//            }
+//
+//            @Override
+//            public void onDecoderInitializationError(MediaCodecTrackRenderer.DecoderInitializationException e) {
+//
+//            }
+//
+//            @Override
+//            public void onCryptoError(MediaCodec.CryptoException e) {
+//
+//            }
+//
+//            @Override
+//            public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs, long initializationDurationMs) {
+//
+//            }
+//        },
+//                AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
+//
+////        final AssetDataSource dataSource = new AssetDataSource(this);
+////        final ExtractorSampleSource sampleSource = new ExtractorSampleSource(Uri.parse("asset:///videos_s_3.mp4"),
+////                dataSource, new DefaultAllocator(64 * 1024), 64 * 1024 * 256);
+////
+////        final MediaCodecVideoTrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(this, sampleSource,
+////                MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT);
+////        final MediaCodecAudioTrackRenderer audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
+////                MediaCodecSelector.DEFAULT);
+//        player.prepare(videoRenderer, audioRenderer);
+//
+//        return new GVRVideoSceneObjectPlayer<ExoPlayer>() {
+//            @Override
+//            public ExoPlayer getPlayer() {
+//                return player;
+//            }
+//
+//            @Override
+//            public void setSurface(final Surface surface) {
+//                player.addListener(new ExoPlayer.Listener() {
+//                    @Override
+//                    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+//                        switch (playbackState) {
+//                            case ExoPlayer.STATE_BUFFERING:
+//                                break;
+//                            case ExoPlayer.STATE_ENDED:
+//                                player.seekTo(0);
+//                                break;
+//                            case ExoPlayer.STATE_IDLE:
+//                                break;
+//                            case ExoPlayer.STATE_PREPARING:
+//                                break;
+//                            case ExoPlayer.STATE_READY:
+//                                break;
+//                            default:
+//                                break;
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onPlayWhenReadyCommitted() {
+//                        surface.release();
+//                    }
+//
+//                    @Override
+//                    public void onPlayerError(ExoPlaybackException error) {
+//                    }
+//                });
+//
+//                player.sendMessage(videoRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
+//            }
+//
+//            @Override
+//            public void release() {
+//                player.release();
+//            }
+//
+//            @Override
+//            public boolean canReleaseSurfaceImmediately() {
+//                return false;
+//            }
+//
+//            @Override
+//            public void pause() {
+//                player.setPlayWhenReady(false);
+//            }
+//
+//            @Override
+//            public void start() {
+//                player.setPlayWhenReady(true);
+//            }
+//        };
     }
 
     private GVRVideoSceneObjectPlayer<?> videoSceneObjectPlayer;

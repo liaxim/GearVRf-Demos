@@ -17,6 +17,8 @@ package org.gearvrf.gvr360video;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -40,25 +42,23 @@ import org.gearvrf.scene_objects.GVRVideoSceneObjectPlayer;
 
 public class Minimal360Video extends GVRMain
 {
-    Minimal360Video(GVRVideoSceneObjectPlayer<?> player) {
-        mPlayer = player;
-    }
-
     /** Called when the activity is first created. */
     @Override
-    public void onInit(GVRContext gvrContext) {
+    public synchronized void onInit(GVRContext gvrContext) {
+        if (null != mPlayer) {
+            proceed();
+        }
+    }
 
-        GVRScene scene = gvrContext.getNextMainScene();
-
-        // set up camerarig position (default)
-        scene.getMainCameraRig().getTransform().setPosition( 0.0f, 0.0f, 0.0f );
+    private void proceed() {
+        GVRScene scene = getGVRContext().getNextMainScene();
 
         // create sphere / mesh
-        GVRSphereSceneObject sphere = new GVRSphereSceneObject(gvrContext, 72, 144, false);
+        GVRSphereSceneObject sphere = new GVRSphereSceneObject(getGVRContext(), 72, 144, false);
         GVRMesh mesh = sphere.getRenderData().getMesh();
 
         // create video scene
-        GVRVideoSceneObject video = new GVRVideoSceneObject( gvrContext, mesh, mPlayer, GVRVideoType.MONO );
+        GVRVideoSceneObject video = new GVRVideoSceneObject( getGVRContext(), mesh, mPlayer, GVRVideoType.MONO );
         video.setName( "video" );
 
         // apply video to scene
@@ -69,5 +69,12 @@ public class Minimal360Video extends GVRMain
     public void onStep() {
     }
 
-    private final GVRVideoSceneObjectPlayer<?> mPlayer;
+    private GVRVideoSceneObjectPlayer<?> mPlayer;
+
+    public synchronized void setPlayer(GVRVideoSceneObjectPlayer<?> player) throws InterruptedException {
+        mPlayer = player;
+        if (null != getGVRContext()) {
+            proceed();
+        }
+    }
 }

@@ -20,17 +20,23 @@ import android.graphics.Color;
 import org.gearvrf.GVRAndroidResource;
 import org.gearvrf.GVRCameraRig;
 import org.gearvrf.GVRContext;
+import org.gearvrf.GVRMesh;
+import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRScript;
 import org.gearvrf.GVRTexture;
+import org.gearvrf.scene_objects.GVRModelSceneObject;
+import org.gearvrf.utility.Log;
+
+import java.io.IOException;
 
 public class SampleMain extends GVRScript {
 
     private GVRContext mGVRContext;
 
     @Override
-    public void onInit(GVRContext gvrContext) {
+    public void onInit(GVRContext gvrContext) throws IOException {
 
         // save context for possible use in onStep(), even though that's empty
         // in this sample
@@ -58,8 +64,57 @@ public class SampleMain extends GVRScript {
         sceneObject.getTransform().setPosition(0.0f, 0.0f, -3.0f);
 
         // add the scene object to the scene graph
-        scene.addSceneObject(sceneObject);
+//        scene.addSceneObject(sceneObject);
 
+
+        GVRSceneObject parent = new GVRSceneObject(gvrContext, 1.2f, 0.7f);
+        parent.getTransform().setPositionZ(-1);
+
+//        final GVRSceneObject stencilMask = gvrContext.getAssetLoader().loadModel("stencil_mask.fbx");
+//        //stencilMask.attachComponent(new GVRStencilMask());
+//        final GVRSceneObject.BoundingVolume boundingVolume = stencilMask.getBoundingVolume();
+//        //use boundingvolume to determine size of the logo
+//        stencilMask.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT);
+//        stencilMask.getRenderData().setAlphaBlend(true);
+//        parent.addChildObject(stencilMask);
+//
+        GVRSceneObject stencilMask = new GVRSceneObject(gvrContext);
+        final GVRMesh stencilMaskMesh = gvrContext.loadMesh(new GVRAndroidResource(gvrContext, "Stencil_Mask_Shadowbox.fbx"));
+        //stencilMask.attachComponent(new GVRStencilMask())
+        parent.addChildObject(stencilMask);
+
+        //scales in X and Y independently
+        //??get from app the logo texture
+        //??get the stencil mask mesh from duncan's model
+        GVRTexture logoTexture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.logo));
+        GVRSceneObject logo = new GVRSceneObject(gvrContext, 1.2f, 0.7f, logoTexture);
+        logo.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT);
+        logo.getRenderData().setAlphaBlend(true);
+        parent.addChildObject(logo);
+
+        GVRTexture backgroundTexture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "GearVR.jpg"));
+        GVRSceneObject background = new GVRSceneObject(gvrContext, 1.2f, 0.7f, backgroundTexture);
+        background.getTransform().setPositionZ(-2);
+        background.getTransform().setScale(4,4,4);
+        parent.addChildObject(background);
+
+        GVRTexture graphics1Texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "donald.png"));
+        GVRSceneObject graphics1 = new GVRSceneObject(gvrContext, 1.2f, 0.7f, graphics1Texture);
+        graphics1.getTransform().setPositionZ(-1.8f);
+        graphics1.getTransform().setScale(2,2,2);
+        graphics1.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT);
+        graphics1.getRenderData().setAlphaBlend(true);
+        parent.addChildObject(graphics1);
+
+        GVRTexture graphics2Texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "circles.png"));
+        GVRSceneObject graphics2 = new GVRSceneObject(gvrContext, 1.2f, 0.7f, graphics2Texture);
+        graphics2.getTransform().setPositionZ(-1.9f);
+        graphics2.getTransform().setScale(2,2,2);
+        graphics2.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT);
+        graphics2.getRenderData().setAlphaBlend(true);
+        parent.addChildObject(graphics2);
+
+        scene.addSceneObject(parent);
     }
 
     @Override

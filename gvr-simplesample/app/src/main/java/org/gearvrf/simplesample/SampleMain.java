@@ -16,54 +16,93 @@
 package org.gearvrf.simplesample;
 
 import android.graphics.Color;
+import android.opengl.GLES30;
 
 import org.gearvrf.GVRAndroidResource;
 import org.gearvrf.GVRCameraRig;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMain;
+import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
 
+import java.io.IOException;
+
 public class SampleMain extends GVRMain {
-
-    private GVRContext mGVRContext;
-
     @Override
-    public void onInit(GVRContext gvrContext) {
-
-        // save context for possible use in onStep(), even though that's empty
-        // in this sample
-        mGVRContext = gvrContext;
-
+    public void onInit(GVRContext gvrContext) throws IOException {
         GVRScene scene = gvrContext.getNextMainScene();
 
-        // set background color
         GVRCameraRig mainCameraRig = scene.getMainCameraRig();
-        mainCameraRig.getLeftCamera()
-                .setBackgroundColor(Color.WHITE);
-        mainCameraRig.getRightCamera()
-                .setBackgroundColor(Color.WHITE);
+        mainCameraRig.getLeftCamera().setBackgroundColor(Color.WHITE);
+        mainCameraRig.getRightCamera().setBackgroundColor(Color.WHITE);
 
-        // load texture
-        GVRTexture texture = gvrContext.loadTexture(new GVRAndroidResource(
-                mGVRContext, R.drawable.gearvr_logo));
+        GVRSceneObject shadowBox1 = makeShadowBox();
+        shadowBox1.getTransform().setPosition(3, 0, -6);
+        scene.addSceneObject(shadowBox1);
 
-        // create a scene object (this constructor creates a rectangular scene
-        // object that uses the standard 'unlit' shader)
-        GVRSceneObject sceneObject = new GVRSceneObject(gvrContext, 4.0f, 2.0f,
-                texture);
+        GVRSceneObject shadowBox2 = makeShadowBox();
+        shadowBox2.getTransform().setPosition(-3, 0, -6);
+        scene.addSceneObject(shadowBox2);
 
-        // set the scene object position
-        sceneObject.getTransform().setPosition(0.0f, 0.0f, -3.0f);
+        GVRSceneObject shadowBox3 = makeShadowBox();
+        shadowBox3.getTransform().setPosition(0, 3, -6);
+        scene.addSceneObject(shadowBox3);
 
-        // add the scene object to the scene graph
-        scene.addSceneObject(sceneObject);
-
+        GVRSceneObject shadowBox4 = makeShadowBox();
+        shadowBox4.getTransform().setPosition(0, -3, -6);
+        scene.addSceneObject(shadowBox4);
     }
 
-    @Override
-    public void onStep() {
-    }
+    GVRSceneObject makeShadowBox() throws IOException {
+        final GVRContext gvrContext = getGVRContext();
+        GVRSceneObject parent = new GVRSceneObject(gvrContext, 1.2f, 0.7f);
 
+//        final GVRSceneObject stencilMask = gvrContext.getAssetLoader().loadModel("stencil_mask.fbx");
+//        //stencilMask.attachComponent(new GVRStencilMask());
+//        final GVRSceneObject.BoundingVolume boundingVolume = stencilMask.getBoundingVolume();
+//        //use boundingvolume to determine size of the logo
+//        stencilMask.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT);
+//        stencilMask.getRenderData().setAlphaBlend(true);
+//        parent.addChildObject(stencilMask);
+//
+
+        GVRTexture texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.white_texture));
+//        final GVRModelSceneObject stencil = gvrContext.getAssetLoader().loadModel("Stencil_Mask_Shadowbox.fbx");
+
+        GVRSceneObject stencil = new GVRSceneObject(gvrContext, 0.9f, 0.35f, texture);
+//        stencil.getRenderData().getMaterial().setMainTexture(texture);
+
+        stencil.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.STENCIL);
+        stencil.getRenderData().setStencilTest(true);
+        stencil.getRenderData().setStencilFunc(GLES30.GL_ALWAYS, 1, 0xFF);
+        stencil.getRenderData().setStencilOp(GLES30.GL_KEEP, GLES30.GL_KEEP, GLES30.GL_REPLACE);
+        stencil.getRenderData().setStencilMask(0xFF);
+        stencil.getRenderData().setDepthMask(false);
+
+        parent.addChildObject(stencil);
+
+        //scales in X and Y independently
+        //??get from app the logo texture
+        //??get the stencil mask mesh from duncan's model
+//        GVRTexture logoTexture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.logo));
+//        GVRSceneObject logo = new GVRSceneObject(gvrContext, 1.2f, 0.7f, logoTexture);
+//        logo.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT);
+//        logo.getRenderData().setAlphaBlend(true);
+//        parent.addChildObject(logo);
+
+        GVRTexture backgroundTexture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "GearVR.jpg"));
+        GVRSceneObject background = new GVRSceneObject(gvrContext, 1.2f, 0.7f, backgroundTexture);
+        background.getTransform().setPositionZ(-2);
+        background.getTransform().setScale(4,4,4);
+
+        background.getRenderData().setStencilTest(true);
+        background.getRenderData().setStencilFunc(GLES30.GL_EQUAL, 1, 0xFF);
+        background.getRenderData().setStencilOp(GLES30.GL_KEEP, GLES30.GL_KEEP, GLES30.GL_REPLACE);
+        background.getRenderData().setStencilMask(0x00);
+        parent.addChildObject(background);
+
+        return parent;
+    }
 }

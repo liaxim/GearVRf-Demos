@@ -34,41 +34,34 @@ import org.gearvrf.utility.Log;
 import java.io.IOException;
 
 public class SampleMain extends GVRScript {
-
-    private GVRContext mGVRContext;
-
     @Override
     public void onInit(GVRContext gvrContext) throws IOException {
-
-        // save context for possible use in onStep(), even though that's empty
-        // in this sample
-        mGVRContext = gvrContext;
-
         GVRScene scene = gvrContext.getNextMainScene();
 
-        // set background color
         GVRCameraRig mainCameraRig = scene.getMainCameraRig();
         mainCameraRig.getLeftCamera().setBackgroundColor(Color.WHITE);
         mainCameraRig.getRightCamera().setBackgroundColor(Color.WHITE);
 
-        // load texture
-        GVRTexture texture = gvrContext.loadTexture(new GVRAndroidResource(
-                mGVRContext, R.drawable.gearvr_logo));
+        GVRSceneObject shadowBox1 = makeShadowBox();
+        shadowBox1.getTransform().setPosition(3, 0, -6);
+        scene.addSceneObject(shadowBox1);
 
-        // create a scene object (this constructor creates a rectangular scene
-        // object that uses the standard 'unlit' shader)
-        GVRSceneObject sceneObject = new GVRSceneObject(gvrContext, 4.0f, 2.0f,
-                texture);
+        GVRSceneObject shadowBox2 = makeShadowBox();
+        shadowBox2.getTransform().setPosition(-3, 0, -6);
+        scene.addSceneObject(shadowBox2);
 
-        // set the scene object position
-        sceneObject.getTransform().setPosition(0.0f, 0.0f, -3.0f);
+        GVRSceneObject shadowBox3 = makeShadowBox();
+        shadowBox3.getTransform().setPosition(0, 3, -6);
+        scene.addSceneObject(shadowBox3);
 
-        // add the scene object to the scene graph
-//        scene.addSceneObject(sceneObject);
+        GVRSceneObject shadowBox4 = makeShadowBox();
+        shadowBox4.getTransform().setPosition(0, -3, -6);
+        scene.addSceneObject(shadowBox4);
+    }
 
-
+    GVRSceneObject makeShadowBox() throws IOException {
+        final GVRContext gvrContext = getGVRContext();
         GVRSceneObject parent = new GVRSceneObject(gvrContext, 1.2f, 0.7f);
-        parent.getTransform().setPositionZ(-1);
 
 //        final GVRSceneObject stencilMask = gvrContext.getAssetLoader().loadModel("stencil_mask.fbx");
 //        //stencilMask.attachComponent(new GVRStencilMask());
@@ -79,7 +72,7 @@ public class SampleMain extends GVRScript {
 //        parent.addChildObject(stencilMask);
 //
 
-        texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.white_texture));
+        GVRTexture texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.white_texture));
 //        final GVRModelSceneObject stencil = gvrContext.getAssetLoader().loadModel("Stencil_Mask_Shadowbox.fbx");
 
         GVRSceneObject stencil = new GVRSceneObject(gvrContext, 0.9f, 0.35f, texture);
@@ -114,23 +107,7 @@ public class SampleMain extends GVRScript {
         background.getRenderData().setStencilMask(0x00);
         parent.addChildObject(background);
 
-//        GVRTexture graphics1Texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "donald.png"));
-//        GVRSceneObject graphics1 = new GVRSceneObject(gvrContext, 1.2f, 0.7f, graphics1Texture);
-//        graphics1.getTransform().setPositionZ(-1.8f);
-//        graphics1.getTransform().setScale(2,2,2);
-//        graphics1.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT);
-//        graphics1.getRenderData().setAlphaBlend(true);
-//        parent.addChildObject(graphics1);
-//
-//        GVRTexture graphics2Texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "circles.png"));
-//        GVRSceneObject graphics2 = new GVRSceneObject(gvrContext, 1.2f, 0.7f, graphics2Texture);
-//        graphics2.getTransform().setPositionZ(-1.9f);
-//        graphics2.getTransform().setScale(2,2,2);
-//        graphics2.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT);
-//        graphics2.getRenderData().setAlphaBlend(true);
-//        parent.addChildObject(graphics2);
-
-        scene.addSceneObject(parent);
+        return parent;
     }
 
     @Override

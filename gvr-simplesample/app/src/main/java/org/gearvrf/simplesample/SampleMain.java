@@ -26,6 +26,7 @@ import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
+import org.gearvrf.scene_objects.GVRSphereSceneObject;
 
 import java.io.IOException;
 
@@ -41,18 +42,18 @@ public class SampleMain extends GVRMain {
         GVRSceneObject shadowBox1 = makeShadowBox();
         shadowBox1.getTransform().setPosition(3, 0, -6);
         scene.addSceneObject(shadowBox1);
-
-        GVRSceneObject shadowBox2 = makeShadowBox();
-        shadowBox2.getTransform().setPosition(-3, 0, -6);
-        scene.addSceneObject(shadowBox2);
-
-        GVRSceneObject shadowBox3 = makeShadowBox();
-        shadowBox3.getTransform().setPosition(0, 3, -6);
-        scene.addSceneObject(shadowBox3);
-
-        GVRSceneObject shadowBox4 = makeShadowBox();
-        shadowBox4.getTransform().setPosition(0, -3, -6);
-        scene.addSceneObject(shadowBox4);
+//
+//        GVRSceneObject shadowBox2 = makeShadowBox();
+//        shadowBox2.getTransform().setPosition(-3, 0, -6);
+//        scene.addSceneObject(shadowBox2);
+//
+//        GVRSceneObject shadowBox3 = makeShadowBox();
+//        shadowBox3.getTransform().setPosition(0, 3, -6);
+//        scene.addSceneObject(shadowBox3);
+//
+//        GVRSceneObject shadowBox4 = makeShadowBox();
+//        shadowBox4.getTransform().setPosition(0, -3, -6);
+//        scene.addSceneObject(shadowBox4);
     }
 
     GVRSceneObject makeShadowBox() throws IOException {
@@ -71,15 +72,17 @@ public class SampleMain extends GVRMain {
         GVRTexture texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.white_texture));
 //        final GVRModelSceneObject stencil = gvrContext.getAssetLoader().loadModel("Stencil_Mask_Shadowbox.fbx");
 
-        GVRSceneObject stencil = new GVRSceneObject(gvrContext, 0.9f, 0.35f, texture);
-//        stencil.getRenderData().getMaterial().setMainTexture(texture);
+//        GVRSceneObject stencil = new GVRSceneObject(gvrContext, 0.9f, 0.35f, texture);
 
-        stencil.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.STENCIL);
-        stencil.getRenderData().setStencilTest(true);
-        stencil.getRenderData().setStencilFunc(GLES30.GL_ALWAYS, 1, 0xFF);
-        stencil.getRenderData().setStencilOp(GLES30.GL_KEEP, GLES30.GL_KEEP, GLES30.GL_REPLACE);
-        stencil.getRenderData().setStencilMask(0xFF);
-        stencil.getRenderData().setDepthMask(false);
+        GVRSceneObject stencil = new GVRSphereSceneObject(gvrContext, true);
+        stencil.getRenderData().getMaterial().setMainTexture(texture);
+
+        stencil.getRenderData()
+                .setRenderingOrder(GVRRenderData.GVRRenderingOrder.STENCIL)
+                .setStencilTest(true)
+                .setStencilFunc(GLES30.GL_ALWAYS, 1, 0xFF)
+                .setStencilOp(GLES30.GL_KEEP, GLES30.GL_KEEP, GLES30.GL_REPLACE)
+                .setStencilMask(0xFF);
 
         parent.addChildObject(stencil);
 
@@ -94,13 +97,12 @@ public class SampleMain extends GVRMain {
 
         GVRTexture backgroundTexture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "GearVR.jpg"));
         GVRSceneObject background = new GVRSceneObject(gvrContext, 1.2f, 0.7f, backgroundTexture);
-        background.getTransform().setPositionZ(-2);
-        background.getTransform().setScale(4,4,4);
+        background.getTransform().setPositionZ(-2).setScale(4,4,4);
 
-        background.getRenderData().setStencilTest(true);
-        background.getRenderData().setStencilFunc(GLES30.GL_EQUAL, 1, 0xFF);
-        background.getRenderData().setStencilOp(GLES30.GL_KEEP, GLES30.GL_KEEP, GLES30.GL_REPLACE);
-        background.getRenderData().setStencilMask(0x00);
+        background.getRenderData()
+                .setStencilTest(true)
+                .setStencilFunc(GLES30.GL_EQUAL, 1, 0xFF)
+                .setStencilMask(0x00);
         parent.addChildObject(background);
 
         return parent;

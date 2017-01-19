@@ -42,18 +42,18 @@ public class SampleMain extends GVRMain {
         GVRSceneObject shadowBox1 = makeShadowBox();
         shadowBox1.getTransform().setPosition(3, 0, -6);
         scene.addSceneObject(shadowBox1);
-//
-//        GVRSceneObject shadowBox2 = makeShadowBox();
-//        shadowBox2.getTransform().setPosition(-3, 0, -6);
-//        scene.addSceneObject(shadowBox2);
-//
-//        GVRSceneObject shadowBox3 = makeShadowBox();
-//        shadowBox3.getTransform().setPosition(0, 3, -6);
-//        scene.addSceneObject(shadowBox3);
-//
-//        GVRSceneObject shadowBox4 = makeShadowBox();
-//        shadowBox4.getTransform().setPosition(0, -3, -6);
-//        scene.addSceneObject(shadowBox4);
+
+        GVRSceneObject shadowBox2 = makeShadowBox();
+        shadowBox2.getTransform().setPosition(-3, 0, -6);
+        scene.addSceneObject(shadowBox2);
+
+        GVRSceneObject shadowBox3 = makeShadowBox();
+        shadowBox3.getTransform().setPosition(0, 3, -6);
+        scene.addSceneObject(shadowBox3);
+
+        GVRSceneObject shadowBox4 = makeShadowBox();
+        shadowBox4.getTransform().setPosition(0, -3, -6);
+        scene.addSceneObject(shadowBox4);
     }
 
     GVRSceneObject makeShadowBox() throws IOException {
@@ -78,8 +78,8 @@ public class SampleMain extends GVRMain {
         stencil.getRenderData().getMaterial().setMainTexture(texture);
 
         stencil.getRenderData()
-                .setRenderingOrder(GVRRenderData.GVRRenderingOrder.STENCIL)
-                .setStencilTest(true)
+//                .setRenderingOrder(GVRRenderData.GVRRenderingOrder.STENCIL)
+//                .setStencilTest(true)
                 .setStencilFunc(GLES30.GL_ALWAYS, 1, 0xFF)
                 .setStencilOp(GLES30.GL_KEEP, GLES30.GL_KEEP, GLES30.GL_REPLACE)
                 .setStencilMask(0xFF);
@@ -100,7 +100,7 @@ public class SampleMain extends GVRMain {
         background.getTransform().setPositionZ(-2).setScale(4,4,4);
 
         background.getRenderData()
-                .setStencilTest(true)
+//                .setStencilTest(true)
                 .setStencilFunc(GLES30.GL_EQUAL, 1, 0xFF)
                 .setStencilMask(0x00);
         parent.addChildObject(background);

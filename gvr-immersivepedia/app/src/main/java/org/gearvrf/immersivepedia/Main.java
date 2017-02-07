@@ -21,6 +21,7 @@ import org.gearvrf.GVRMain;
 import org.gearvrf.immersivepedia.focus.FocusableController;
 import org.gearvrf.immersivepedia.input.TouchPadInput;
 import org.gearvrf.immersivepedia.scene.DinosaurScene;
+import org.gearvrf.immersivepedia.scene.GridScene;
 import org.gearvrf.immersivepedia.scene.MenuScene;
 import org.gearvrf.immersivepedia.util.AudioClip;
 import org.gearvrf.immersivepedia.util.FPSCounter;
@@ -33,6 +34,7 @@ public class Main extends GVRMain {
 
     private MenuScene menuScene;
     public static DinosaurScene dinosaurScene;
+    public static GridScene gridScene;
     private static MediaPlayer mediaPlayer;
 
     @Override
@@ -48,6 +50,7 @@ public class Main extends GVRMain {
 
         dinosaurScene = new DinosaurScene(gvrContext);
         menuScene = new MenuScene(gvrContext);
+        gridScene = new GridScene(gvrContext);
 
         GazeController.setupGazeCursor(gvrContext);
         closeSplashScreen();
@@ -110,12 +113,12 @@ public class Main extends GVRMain {
     @Override
     public boolean onBackPress() {
         final GVRScene mainScene = getGVRContext().getMainScene();
-        if (dinosaurScene == mainScene) {
+        if (dinosaurScene == mainScene || gridScene == mainScene) {
             menuScene = new MenuScene(getGVRContext());
             getGVRContext().setMainScene(menuScene);
             GazeController.enableGaze();
             return true;
         }
-        return false;
+        return true;
     }
 }

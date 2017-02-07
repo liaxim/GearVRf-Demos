@@ -99,6 +99,31 @@ public class MenuScene extends GVRScene {
         birds.setTexts(getGVRContext().getContext().getString(R.string.birds), getGVRContext().getContext().getString(R.string.unavailable));
         birds.setOnClickListener(getUnavailableMenuItemClick());
         birds.setName("menu_birds");
+
+        birds.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick() {
+                for (GVRSceneObject object : getWholeSceneObjects()) {
+                    if (object.getRenderData() != null && object.getRenderData().getMaterial() != null) {
+                        totalRenderObject++;
+                        new GVROpacityAnimation(object, 1f, 0f).start(getGVRContext().getAnimationEngine()).setOnFinish(new GVROnFinish() {
+
+                            @Override
+                            public void finished(GVRAnimation arg0) {
+                                finishCounter++;
+                                if (finishCounter == totalRenderObject) {
+                                    totalRenderObject = 0;
+                                    finishCounter = 0;
+                                    Main.gridScene.show();
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
+
         addSceneObject(birds);
     }
 

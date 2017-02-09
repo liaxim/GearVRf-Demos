@@ -13,7 +13,7 @@ public class MainActivity extends GVRActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         main = new SampleMain();
-        setMain(main, "gvr.xml");
+        setMain(main);
     }
 
     @Override

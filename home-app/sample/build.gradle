@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 
-System.setProperty("appName", "home-app")
+//System.setProperty("appName", "home-app")
 
 if(file("../../common.gradle").exists()) {
     apply from: '../../common.gradle'
@@ -20,5 +20,16 @@ android {
     sourceSets.main {
         jni.srcDirs = [] // no auto generation of Android.mk
         jniLibs.srcDir 'libs' // pre-compiled libraries
+    }
+
+    productFlavors {
+        lateralCorrection {
+            applicationIdSuffix ".lateralCorrection"
+            resValue 'string', 'app_name', "home-app-lateralCorrection"
+        }
+        noLateralCorrection {
+            applicationIdSuffix ".noLateralCorrection"
+            resValue 'string', 'app_name', "home-app-noLateralCorrection"
+        }
     }
 }

@@ -49,9 +49,9 @@
             colorFormat="COLOR_8888"
             depthFormat="DEPTH_24"
             fov-y="DEFAULT"
-            multiSamples="2"
-            resolutionWidth="DEFAULT"
-            resolutionHeight="DEFAULT"
+            multiSamples="4"
+            resolutionWidth="3840"
+            resolutionHeight="2160"
             resolveDepth="false" />
 
         <head-model-parms

@@ -1,6 +1,7 @@
 package com.samsung.mps.sample;
 
 import android.os.Environment;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import org.gearvrf.FutureWrapper;
@@ -26,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 
-public class SampleMain extends GVRMain {
+public class SampleMain extends GVRMain implements VRTouchPadGestureDetector.OnTouchPadGestureListener{
     private static final String TAG = SampleMain.class.getSimpleName();
     private static final float CUBE_WIDTH = 100.0f;
     private static final String APP_PATH = Environment.getExternalStorageDirectory()
@@ -36,18 +37,53 @@ public class SampleMain extends GVRMain {
     private static String[] files = new String[4];
     private float lastX = 0, lastY = 0;
     private boolean isOnClick = false;
-    private static final float MOVE_SCALE_FACTOR = 0.0005f;
+    private static final float MOVE_SCALE_FACTOR = 0.05f;
     private static final float MOVE_THRESHOLD = 400f;
-    private static final float MOVE_THRESHOLD_X = 500f;
+    private static final float MOVE_THRESHOLD_X = 5f;
     private static final float MIN_POSSIBLE_Z = -40.0f;
     private static final float MAX_POSSIBLE_Z = -10.0f;
 
     static {
-
         files[0] = new String("1.jpg");
         files[1] = new String("2.jpg");
         files[2] = new String("3.jpg");
         files[3] = new String("4.jpg");
+    }
+
+    @Override
+    public boolean onSingleTap(MotionEvent e) {
+        return false;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent e) {
+
+    }
+
+    @Override
+    public boolean onSwipe(MotionEvent e, VRTouchPadGestureDetector.SwipeDirection
+            swipeDirection, float velocityX, float velocityY) {
+        if(swipeDirection == VRTouchPadGestureDetector.SwipeDirection.Forward){
+            currentIndex = currentIndex + 1;
+            currentIndex = currentIndex % skyboxes.size();
+            changeSkyBox();
+        }else if(swipeDirection == VRTouchPadGestureDetector.SwipeDirection.Backward){
+            currentIndex = currentIndex - 1;
+            if(currentIndex < 0){
+                currentIndex = skyboxes.size() -1;
+            }
+
+            changeSkyBox();
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent arg0, MotionEvent arg1, float arg2, float arg3) {
+        if(arg2 <MOVE_THRESHOLD_X) {
+            mPickHandler.setDistance(arg3 * -MOVE_SCALE_FACTOR);
+        }
+        return true;
     }
 
     public class PickHandler implements IPickEvents {
@@ -190,7 +226,6 @@ public class SampleMain extends GVRMain {
                 gvrContext.createQuad(CUBE_WIDTH, CUBE_WIDTH));
         String fullPath = APP_PATH + "skybox";
 
-        //+ File.separator + "bg.zip";
 
         File dir = new File(fullPath);
 
@@ -296,49 +331,6 @@ public class SampleMain extends GVRMain {
     @Override
     public void onStep() {
 
-    }
-
-
-    public void onTouchEvent(MotionEvent event) {
-        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_DOWN:
-                lastX = event.getX();
-                lastY = event.getY();
-                isOnClick = true;
-                break;
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                if (isOnClick) {
-
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                float currentX = event.getX();
-                float currentY = event.getY();
-                //float dx = currentX - lastX;
-                float dx = 0.0f;
-                float dy = currentY - lastY;
-                float distance = dy * dy;
-                float distanceX = currentX - lastX;
-                if (Math.abs(distanceX) > MOVE_THRESHOLD_X) {
-                    lastX = currentX;
-                    currentIndex = currentIndex + 1;
-                    currentIndex = currentIndex % skyboxes.size();
-                    changeSkyBox();
-                } else if (Math.abs(distance) > MOVE_THRESHOLD) {
-                    lastY = currentY;
-                    distance *= MOVE_SCALE_FACTOR;
-                    if (dy < 0) {
-                        distance = -distance;
-                    }
-                    mPickHandler.setDistance(distance);
-
-                    isOnClick = false;
-                }
-                break;
-            default:
-                break;
-        }
     }
 }
 

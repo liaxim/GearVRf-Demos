@@ -84,7 +84,7 @@ public class SampleMain extends GVRMain {
                     Log.i("mmarinov", "glGenTextures error " + err);
                 }
 
-                surfaceTexture = new SurfaceTexture(textureId[0]);
+                surfaceTexture = new SurfaceTexture(textureId[0], true);
                 surfaceTexture.setDefaultBufferSize(1024, 1024);
                 surface = new Surface(surfaceTexture);
                 surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
@@ -120,6 +120,12 @@ public class SampleMain extends GVRMain {
                         if (GLES31.GL_NO_ERROR != (err = GLES31.glGetError())) {
                             Log.i("mmarinov", "run error2 " + err);
                         }
+                        gvrContext.runOnGlThreadPostRender(0, new Runnable() {
+                            @Override
+                            public void run() {
+                                surfaceTexture.releaseTexImage();
+                            }
+                        });
                     }
                 };
                 gvrContext.registerDrawFrameListener(listener);

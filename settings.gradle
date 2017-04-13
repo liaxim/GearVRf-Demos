@@ -1,4 +1,11 @@
-new File(".").eachDirMatch(~"gvr-*.*") {
+new File(".").eachDirMatch(~"gvr-events") {
+    def name = ':' + it.name
+    def path = '' + it.name + '/app'
+
+    include name
+    project(name).projectDir=new File(path)
+}
+new File(".").eachDirMatch(~"gvr-360video") {
     def name = ':' + it.name
     def path = '' + it.name + '/app'
 

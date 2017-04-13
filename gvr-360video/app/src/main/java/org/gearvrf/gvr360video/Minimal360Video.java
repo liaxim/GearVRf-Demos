@@ -15,10 +15,17 @@
 
 package org.gearvrf.gvr360video;
 
+import org.gearvrf.FutureWrapper;
+import org.gearvrf.GVRAndroidResource;
 import org.gearvrf.GVRContext;
+import org.gearvrf.GVRCursorController;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMesh;
 import org.gearvrf.GVRScene;
+import org.gearvrf.GVRSceneObject;
+import org.gearvrf.io.CursorControllerListener;
+import org.gearvrf.io.GVRControllerType;
+import org.gearvrf.io.GVRInputManager;
 import org.gearvrf.scene_objects.GVRSphereSceneObject;
 import org.gearvrf.scene_objects.GVRVideoSceneObject;
 import org.gearvrf.scene_objects.GVRVideoSceneObject.GVRVideoType;
@@ -46,7 +53,49 @@ public class Minimal360Video extends GVRMain
 
         // apply video to scene
         scene.addSceneObject( video );
+
+        // set up the input manager for the main scene
+        GVRInputManager inputManager = gvrContext.getInputManager();
+        inputManager.addCursorControllerListener(listener);
+        for (GVRCursorController cursor : inputManager.getCursorControllers()) {
+            listener.onCursorControllerAdded(cursor);
+        }
     }
 
+    private CursorControllerListener listener = new CursorControllerListener() {
+
+        @Override
+        public void onCursorControllerRemoved(GVRCursorController controller) {
+            if (controller.getControllerType() == GVRControllerType.GAZE) {
+                if (cursor != null) {
+                    getGVRContext().getMainScene().getMainCameraRig().removeChildObject(cursor);
+                }
+                controller.setEnable(false);
+            }
+        }
+
+        @Override
+        public void onCursorControllerAdded(GVRCursorController controller) {
+            // Only allow only gaze
+            if (controller.getControllerType() == GVRControllerType.GAZE) {
+                cursor = new GVRSceneObject(getGVRContext(),
+                        new FutureWrapper<GVRMesh>(getGVRContext().createQuad(0.1f, 0.1f)),
+                        getGVRContext().loadFutureTexture(new GVRAndroidResource(getGVRContext(), R.raw.cursor)));
+                cursor.getTransform().setPosition(0.0f, 0.0f, DEPTH);
+                getGVRContext().getMainScene().getMainCameraRig().addChildObject(cursor);
+                cursor.getRenderData().setDepthTest(false);
+                cursor.getRenderData().setRenderingOrder(100000);
+                controller.setPosition(0.0f, 0.0f, DEPTH);
+                controller.setNearDepth(DEPTH);
+                controller.setFarDepth(DEPTH);
+            } else {
+                // disable all other types
+                controller.setEnable(false);
+            }
+        }
+    };
+
+    private static final float DEPTH = -1.5f;
+    private GVRSceneObject cursor;
     private final GVRVideoSceneObjectPlayer<?> mPlayer;
 }

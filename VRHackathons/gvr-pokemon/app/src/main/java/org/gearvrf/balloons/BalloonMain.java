@@ -19,6 +19,7 @@ import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.opengl.GLES30;
 import android.view.MotionEvent;
 
 import org.gearvrf.GVRAndroidResource;
@@ -32,6 +33,7 @@ import org.gearvrf.GVRPicker.GVRPickedObject;
 import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
+import org.gearvrf.GVRSharedTexture;
 import org.gearvrf.GVRSphereCollider;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.IPickEvents;
@@ -42,6 +44,8 @@ import org.gearvrf.utility.Log;
 import org.joml.Vector2f;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Timer;
@@ -49,6 +53,16 @@ import java.util.TimerTask;
 import java.util.concurrent.Future;
 
 public class BalloonMain extends GVRMain {
+
+    public void onPreviewFrame(byte[] image) {
+        final BalloonActivity ba = (BalloonActivity)getGVRContext().getActivity();
+        yBuffer.put(image, 0, ba.width*ba.height);
+        yBuffer.position(0);
+
+        //Copy the UV channels of the image into their buffer, the following (width*height/2) bytes are the UV channel; the U and V bytes are interspread
+        uvBuffer.put(image, ba.width*ba.height, ba.width*ba.height/2);
+        uvBuffer.position(0);
+    }
 
     public class PickHandler implements IPickEvents
     {
@@ -118,34 +132,13 @@ public class BalloonMain extends GVRMain {
     }
 
     @Override
-    public void onInit(GVRContext context)
+    public void onInit(final GVRContext context)
     {
-        /*
-         * Load the balloon popping sound
-         */
-        mAudioEngine = new SoundPool(4, AudioManager.STREAM_MUSIC, 0);
-        try
-        {
-            mPopSound = new SoundEffect(context, mAudioEngine, "pop.wav", false);
-            mPopSound.setVolume(0.6f);
-        }
-        catch (IOException ex)
-        {
-            Log.e("Audio", "Cannot load pop.wav");
-        }        /*
+       /*
          * Set the background color
          */
         mScene = context.getMainScene();
         mScene.setBackgroundColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-        /*
-         * Set the camera passthrough
-         */
-        cameraObject = new GVRCameraSceneObject(
-                context, 18f, 10f, mActivity.getCamera());
-        cameraObject.setUpCameraForVrMode(1); // set up 60 fps camera preview.
-        cameraObject.getTransform().setPosition(0.0f, -1.8f, -10.0f);
-        mScene.getMainCameraRig().addChildObject(cameraObject);
 
         /*
          * Set up a head-tracking pointer
@@ -157,150 +150,28 @@ public class BalloonMain extends GVRMain {
         headTracker.getRenderData().setDepthTest(false);
         headTracker.getRenderData().setRenderingOrder(100000);
         mScene.getMainCameraRig().addChildObject(headTracker);
-        /*
-         * Add the scoreboard
-         */
-        mScoreBoard = makeScoreboard(context);
-        headTracker.addChildObject(mScoreBoard);
-        /*
-         * Add the environment
-         */
-//        GVRSceneObject environment = makeEnvironment(context);
-//        mScene.addSceneObject(environment);
-        /*
-         * Make balloon prototype sphere mesh
-         */
-        mMaterials = makeMaterials(context);
-        mSphereMesh = new GVRSphereSceneObject(context, true).getRenderData().getMesh();
 
-        /*
-         * Start the particle emitter making balloons
-         */
-        GVRSceneObject particleRoot = new GVRSceneObject(context);
-        particleRoot.setName("ParticleSystem");
-        ParticleEmitter.MakeParticle particleCreator = new ParticleEmitter.MakeParticle()
-        {
-            public GVRSceneObject create(GVRContext context, Integer index) { return makeBalloon(context, index); }
-        };
-        mParticleSystem = new ParticleEmitter(context, mScene, particleCreator);
-        mParticleSystem.MaxDistance = 10.0f;
-        //mParticleSystem.TotalParticles = 10;
-        //mParticleSystem.EmissionRate = 3;
-        mParticleSystem.Velocity = new ParticleEmitter.Range<Float>(2.0f, 6.0f);
-        mParticleSystem.EmitterArea = new ParticleEmitter.Range<Vector2f>(new Vector2f(-5.0f, -2.0f), new Vector2f(5.0f, 2.0f));
-        particleRoot.getTransform().setRotationByAxis(-90.0f, 1, 0, 0);
-        particleRoot.getTransform().setPosition(0, -3.0f, -3.0f);
-        particleRoot.attachComponent(mParticleSystem);
-        mScene.addSceneObject(particleRoot);
-        /*
-         * Respond to picking events
-         */
-        mScene.getMainCameraRig().getOwnerObject().attachComponent(new GVRPicker(context, mScene));
-        mPickHandler = new PickHandler();
-        mScene.getEventReceiver().addListener(mPickHandler);
-		/*
-		 * start the game timer
-		 */
-		mTimer = new Timer();
-		TimerTask gameOver = new TimerTask()
-		{
-			public void run() { gameOver(); }
-		};
-		long oneMinute = 60 * 1000;
-		mTimer.schedule(gameOver, oneMinute);
+
+        final BalloonActivity ba = (BalloonActivity)getGVRContext().getActivity();
+        yBuffer = ByteBuffer.allocateDirect(ba.width*ba.height);
+        uvBuffer = ByteBuffer.allocateDirect(ba.width*ba.height/2); //We have (width/2*height/2) pixels, each pixel is 2 bytes
+        yBuffer.order(ByteOrder.nativeOrder());
+        uvBuffer.order(ByteOrder.nativeOrder());
+
+        final int[] textureNames = new int[1];
+        context.runOnGlThread(new Runnable() {
+            @Override
+            public void run() {
+                GLES30.glGenTextures(1, textureNames, 0);
+                //#define GL_TEXTURE_EXTERNAL_OES           0x8D65
+                GLES30.glBindTexture(0x8D65, textureNames[0]);
+
+                GVRSharedTexture sharedTexture = new GVRSharedTexture(context, textureNames[0]);
+            }
+        });
     }
-
-    @Override
-    public void onAfterInit() {
-        sMediaPlayer = MediaPlayer.create(getGVRContext().getContext(), R.raw.backgroundmusic);
-        sMediaPlayer.setLooping(true);
-        sMediaPlayer.start();
-    }
-
-    public void gameOver()
-    {
-        mParticleSystem.setEnable(false);
-        //mScoreBoard.getTransform().setPosition(0, 0, -2);
-        mScoreBoard.setBackgroundColor(Color.RED);
-        mScoreBoard.setText(mScoreBoard.getTextString() + " Time's Up");
-        mGameOver = true;
-    }
-
-    GVRSceneObject makeBalloon(GVRContext context, Integer index)
-    {
-        //String Tag = "makeBalloon";
-        //android.util.Log.e(Tag, "enter make ballon...");
-
-        //android.util.Log.e(Tag, "Calling random...");
-        //Random rand = new Random();
-        //int img_index = rand.nextInt(25);
-        //android.util.Log.e(Tag, "img_index: " + img_index);
-
-
-
-        GVRTexture texture = context.loadTexture(pokemon_imgs[index]);
-        // create a a scene object (this constructor creates a rectangular scene*
-        // object that uses the standard 'unlit' shader)*
-        GVRSceneObject sceneObject = new GVRSceneObject(context, 2.0f, 2.0f, texture);
-        // set the scene object position*
-        sceneObject.getTransform().setPosition(0.0f, 0.0f, -3.0f);
-        GVRSphereCollider collider = new GVRSphereCollider(context);
-        sceneObject.attachComponent(collider);
-        return sceneObject;
-    }
-
-    GVRSceneObject makeEnvironment(GVRContext context)
-    {
-        Future<GVRTexture> tex = context.loadFutureCubemapTexture(new GVRAndroidResource(context, R.raw.lycksele3));
-        GVRMaterial material = new GVRMaterial(context, GVRMaterial.GVRShaderType.Cubemap.ID);
-        material.setMainTexture(tex);
-        GVRSphereSceneObject environment = new GVRSphereSceneObject(context, 18, 36, false, material, 4, 4);
-        environment.getTransform().setScale(20.0f, 20.0f, 20.0f);
-
-        GVRDirectLight sunLight = new GVRDirectLight(context);
-        sunLight.setAmbientIntensity(0.4f, 0.4f, 0.4f, 1.0f);
-        sunLight.setDiffuseIntensity(0.6f, 0.6f, 0.6f, 1.0f);
-        environment.attachComponent(sunLight);
-        return environment;
-    }
-
-    /*
-     * Make an array of materials for the particles
-     * so they will not all be the same.
-     */
-    ArrayList<GVRMaterial> makeMaterials(GVRContext ctx)
-    {
-        float[][] colors = new float[][] {
-                { 1.0f,   0.0f,   0.0f,   0.8f },
-                { 0.0f,   1.0f,   0.0f,   0.8f },
-                { 0.0f,   0.0f,   1.0f,   0.8f },
-                { 1.0f,   0.0f,   1.0f,   0.8f },
-                { 1.0f,   1.0f,   0.0f,   0.8f },
-                { 0.0f,   1.0f,   1.0f,   0.8f }
-        };
-        ArrayList<GVRMaterial> materials = new ArrayList<GVRMaterial>();
-        for (int i = 0; i < 6; ++i)
-        {
-            GVRMaterial mtl = new GVRMaterial(ctx);
-            mtl.setDiffuseColor(colors[i][0], colors[i][1], colors[i][2], colors[i][3]);
-            materials.add(mtl);
-        }
-        return materials;
-    }
-
-    /*
-     * Make the scoreboard
-     */
-    GVRTextViewSceneObject makeScoreboard(GVRContext ctx)
-    {
-        GVRTextViewSceneObject scoreBoard = new GVRTextViewSceneObject(ctx, 5, 0.7f, "Score: 0");
-        GVRRenderData rdata = scoreBoard.getRenderData();
-        scoreBoard.getTransform().setPosition(0.3f, 1.8f, -3.0f);
-        scoreBoard.setTextColor(Color.BLACK);
-        scoreBoard.setBackgroundColor(Color.TRANSPARENT);
-
-        return scoreBoard;
-    }
+    private ByteBuffer yBuffer;
+    private ByteBuffer uvBuffer;
 
     public void onTouchEvent(MotionEvent event)
     {

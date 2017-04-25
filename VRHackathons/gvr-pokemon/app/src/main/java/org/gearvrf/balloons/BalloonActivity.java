@@ -88,10 +88,13 @@ public class BalloonActivity extends GVRActivity {
                             + Math.round(1000 / (currentTime - prevTime)));
             prevTime = currentTime;
             camera.addCallbackBuffer(previewCallbackBuffer);
+
+            ((BalloonMain)getMain()).onPreviewFrame(previewCallbackBuffer);
         }
     };
 
-    private byte[] previewCallbackBuffer = null;
+    byte[] previewCallbackBuffer = null;
+    int width, height;
     private void createCameraView() {
 
         if (!checkCameraHardware(this)) {
@@ -108,6 +111,8 @@ public class BalloonActivity extends GVRActivity {
                 params.setZoom(0);
                 camera.setParameters(params);
 
+                width = params.getPreviewSize().width;
+                height = params.getPreviewSize().height;
                 int bufferSize = params.getPreviewSize().height
                         * params.getPreviewSize().width
                         * ImageFormat

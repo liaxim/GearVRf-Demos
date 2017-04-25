@@ -1,2 +1,7 @@
 http://stackoverflow.com/questions/22456884/how-to-render-androids-yuv-nv21-camera-image-on-the-background-in-libgdx-with-o
-
+https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_YUV_target.txt
+http://stackoverflow.com/questions/12428108/ios-how-to-draw-a-yuv-image-using-opengl
+http://stackoverflow.com/questions/30191911/is-it-possible-to-draw-yuv422-and-yuv420-texture-using-opengl
+http://www.fourcc.org/source/YUV420P-OpenGL-GLSLang.c
+http://stackoverflow.com/questions/22456884/how-to-render-androids-yuv-nv21-camera-image-on-the-background-in-libgdx-with-o
+http://stackoverflow.com/questions/12428108/ios-how-to-draw-a-yuv-image-using-opengl

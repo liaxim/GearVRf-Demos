@@ -15,18 +15,16 @@
 
 package org.gearvrf.balloons;
 
-import org.gearvrf.GVRActivity;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.MotionEvent;
-
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PreviewCallback;
+import android.os.Bundle;
+import android.util.Log;
+
+import org.gearvrf.GVRActivity;
 
 
 public class BalloonActivity extends GVRActivity {
@@ -60,12 +58,6 @@ public class BalloonActivity extends GVRActivity {
         createCameraView();
         if (BalloonMain.sMediaPlayer != null)
             BalloonMain.sMediaPlayer.start();
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        main.onTouchEvent(event);
-        return super.onTouchEvent(event);
     }
 
     private boolean checkCameraHardware(Context context) {

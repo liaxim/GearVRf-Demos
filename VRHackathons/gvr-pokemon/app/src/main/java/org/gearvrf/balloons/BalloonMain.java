@@ -54,7 +54,9 @@ import java.util.concurrent.Future;
 
 public class BalloonMain extends GVRMain {
 
+    final int[] textureNames = new int[2];
     public void onPreviewFrame(byte[] image) {
+        Log.i("mmarinov", "onPreviewFrame");
         final BalloonActivity ba = (BalloonActivity)getGVRContext().getActivity();
         yBuffer.put(image, 0, ba.width*ba.height);
         yBuffer.position(0);
@@ -62,6 +64,24 @@ public class BalloonMain extends GVRMain {
         //Copy the UV channels of the image into their buffer, the following (width*height/2) bytes are the UV channel; the U and V bytes are interspread
         uvBuffer.put(image, ba.width*ba.height, ba.width*ba.height/2);
         uvBuffer.position(0);
+
+        getGVRContext().runOnGlThread(new Runnable() {
+            @Override
+            public void run() {
+                Log.i("mmarinov", "sending data");
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureNames[0]);
+                GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, ba.width, ba.height, 0,
+                        GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, yBuffer);
+                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
+                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureNames[1]);
+                GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, ba.width/2, ba.height/2,
+                        0, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, uvBuffer);
+            }
+        });
     }
 
     public class PickHandler implements IPickEvents
@@ -140,33 +160,26 @@ public class BalloonMain extends GVRMain {
         mScene = context.getMainScene();
         mScene.setBackgroundColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-        /*
-         * Set up a head-tracking pointer
-         */
-        GVRSceneObject headTracker = new GVRSceneObject(context,
-                context.createQuad(0.1f, 0.1f),
-                context.loadTexture(new GVRAndroidResource(context, R.drawable.headtrackingpointer)));
-        headTracker.getTransform().setPosition(0.0f, 0.0f, -1.0f);
-        headTracker.getRenderData().setDepthTest(false);
-        headTracker.getRenderData().setRenderingOrder(100000);
-        mScene.getMainCameraRig().addChildObject(headTracker);
-
-
         final BalloonActivity ba = (BalloonActivity)getGVRContext().getActivity();
         yBuffer = ByteBuffer.allocateDirect(ba.width*ba.height);
         uvBuffer = ByteBuffer.allocateDirect(ba.width*ba.height/2); //We have (width/2*height/2) pixels, each pixel is 2 bytes
         yBuffer.order(ByteOrder.nativeOrder());
         uvBuffer.order(ByteOrder.nativeOrder());
 
-        final int[] textureNames = new int[1];
+        final GVRSceneObject quad = new GVRSceneObject(context, 2, 1);
+        quad.getRenderData().setShaderTemplate(YUV2RGBShader.class);
+        mScene.addSceneObject(quad);
+
         context.runOnGlThread(new Runnable() {
             @Override
             public void run() {
-                GLES30.glGenTextures(1, textureNames, 0);
-                //#define GL_TEXTURE_EXTERNAL_OES           0x8D65
-                GLES30.glBindTexture(0x8D65, textureNames[0]);
+                Log.i("mmarinov", "run1");
+                GLES30.glGenTextures(2, textureNames, 0);
 
-                GVRSharedTexture sharedTexture = new GVRSharedTexture(context, textureNames[0]);
+                GVRSharedTexture sharedTextureY = new GVRSharedTexture(context, textureNames[0]);
+                GVRSharedTexture sharedTextureUV = new GVRSharedTexture(context, textureNames[1]);
+                quad.getRenderData().getMaterial().setTexture("y_texture", sharedTextureY);
+                quad.getRenderData().getMaterial().setTexture("uv_texture", sharedTextureUV);
             }
         });
     }

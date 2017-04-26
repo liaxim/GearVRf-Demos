@@ -27,22 +27,20 @@ import android.util.Log;
 import org.gearvrf.GVRActivity;
 
 
-public class BalloonActivity extends GVRActivity {
-    public BalloonMain main;
+public class YuvConversionActivity extends GVRActivity {
+    public YuvConversionMain main;
     public Camera camera;
 
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         createCameraView();
-        main = new BalloonMain(this);
+        main = new YuvConversionMain(this);
         setMain(main, "gvr.xml");
     }
 
     @Override
     protected void onPause() {
-        if (BalloonMain.sMediaPlayer != null)
-            BalloonMain.sMediaPlayer.pause();
         super.onPause();
         if (camera != null) {
             camera.setPreviewCallback(null);
@@ -56,8 +54,6 @@ public class BalloonActivity extends GVRActivity {
     protected void onResume() {
         super.onResume();
         createCameraView();
-        if (BalloonMain.sMediaPlayer != null)
-            BalloonMain.sMediaPlayer.start();
     }
 
     private boolean checkCameraHardware(Context context) {
@@ -81,7 +77,7 @@ public class BalloonActivity extends GVRActivity {
             prevTime = currentTime;
             camera.addCallbackBuffer(previewCallbackBuffer);
 
-            ((BalloonMain)getMain()).onPreviewFrame(previewCallbackBuffer);
+            ((YuvConversionMain)getMain()).onPreviewFrame(previewCallbackBuffer);
         }
     };
 

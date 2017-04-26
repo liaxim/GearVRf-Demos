@@ -15,7 +15,6 @@
 
 package org.gearvrf.balloons;
 
-import android.media.MediaPlayer;
 import android.opengl.GLES30;
 
 import org.gearvrf.GVRContext;
@@ -24,29 +23,28 @@ import org.gearvrf.GVRMaterial;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRSharedTexture;
+import org.gearvrf.GVRTexture;
 import org.gearvrf.scene_objects.GVRCameraSceneObject;
-import org.gearvrf.utility.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class BalloonMain extends GVRMain {
+/**
+ * Adapted from this excellent post: http://stackoverflow.com/a/22456885
+ */
+public class YuvConversionMain extends GVRMain {
 
     final int[] textureNames = new int[2];
     public void onPreviewFrame(byte[] image) {
-        final BalloonActivity ba = (BalloonActivity)getGVRContext().getActivity();
-        Log.i("mmarinov", "onPreviewFrame " + ba.previewCallbackBuffer.length);
+        final YuvConversionActivity ba = (YuvConversionActivity)getGVRContext().getActivity();
         yBuffer.put(image, 0, ba.width*ba.height);
         yBuffer.position(0);
-
-        //Copy the UV channels of the image into their buffer, the following (width*height/2) bytes are the UV channel; the U and V bytes are interspread
         uvBuffer.put(ba.previewCallbackBuffer, ba.width*ba.height, ba.width*ba.height/2);
         uvBuffer.position(0);
 
         getGVRContext().runOnGlThread(new Runnable() {
             @Override
             public void run() {
-                Log.i("mmarinov", "sending data");
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureNames[0]);
                 GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, ba.width, ba.height, 0,
                         GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, yBuffer);
@@ -54,7 +52,6 @@ public class BalloonMain extends GVRMain {
                 GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
                 GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
                 GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-                Log.i("mmarinov", "sending data1 " + Integer.toHexString(GLES30.glGetError()));
 
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureNames[1]);
                 GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, ba.width/2, ba.height/2,
@@ -63,7 +60,6 @@ public class BalloonMain extends GVRMain {
                 GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
                 GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
                 GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-                Log.i("mmarinov", "sending data2 " + Integer.toHexString(GLES30.glGetError()));
 
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
             }
@@ -71,58 +67,47 @@ public class BalloonMain extends GVRMain {
     }
 
     private GVRScene mScene = null;
-    public static MediaPlayer sMediaPlayer;
-
-
-    private BalloonActivity mActivity;
+    private YuvConversionActivity mActivity;
     private GVRCameraSceneObject cameraObject;
 
-    BalloonMain(BalloonActivity activity) {
+    YuvConversionMain(YuvConversionActivity activity) {
         mActivity = activity;
     }
 
     @Override
     public void onInit(final GVRContext context)
     {
-       /*
-         * Set the background color
-         */
         mScene = context.getMainScene();
 
-        /*
-         * Set the camera passthrough
-         */
-        cameraObject = new GVRCameraSceneObject(
-                context, 18f, 10f, mActivity.getCamera());
+        cameraObject = new GVRCameraSceneObject(context, 18f, 10f, mActivity.getCamera());
         cameraObject.setUpCameraForVrMode(1); // set up 60 fps camera preview.
-//        cameraObject.getTransform().setPosition(0.0f, -1.8f, -10.0f);
-//        mScene.getMainCameraRig().addChildObject(cameraObject);
 
-        final BalloonActivity ba = (BalloonActivity)getGVRContext().getActivity();
+        final YuvConversionActivity ba = (YuvConversionActivity)getGVRContext().getActivity();
         yBuffer = ByteBuffer.allocateDirect(ba.width*ba.height);
-        uvBuffer = ByteBuffer.allocateDirect(ba.width*ba.height/2); //We have (width/2*height/2) pixels, each pixel is 2 bytes
+        uvBuffer = ByteBuffer.allocateDirect(ba.width*ba.height/2);
         yBuffer.order(ByteOrder.nativeOrder());
         uvBuffer.order(ByteOrder.nativeOrder());
 
-        final GVRSceneObject quad = new GVRSceneObject(context, 4, 2);
-        GVRMaterial material = new GVRMaterial(context, GVRMaterial.GVRShaderType.BeingGenerated.ID);
+        final GVRSceneObject quad = new GVRSceneObject(context, 3f, 1.5f);
+        final GVRMaterial material = new GVRMaterial(context, GVRMaterial.GVRShaderType.BeingGenerated.ID);
         quad.getRenderData().setMaterial(material);
+        //add the textures ahead of time to have them picked up by the shader generation
+        material.setTexture("y_texture", (GVRTexture)null);
+        material.setTexture("uv_texture", (GVRTexture)null);
         quad.getRenderData().setShaderTemplate(YUV2RGBShader.class);
         quad.getTransform().setPosition(0,0,-2);
-        mScene.addSceneObject(quad);
+        mScene.getMainCameraRig().addChildObject(quad);
         mScene.bindShaders();
 
         context.runOnGlThread(new Runnable() {
             @Override
             public void run() {
-                Log.i("mmarinov", "run1");
                 GLES30.glGenTextures(2, textureNames, 0);
 
                 GVRSharedTexture sharedTextureY = new GVRSharedTexture(context, textureNames[0]);
                 GVRSharedTexture sharedTextureUV = new GVRSharedTexture(context, textureNames[1]);
-                quad.getRenderData().getMaterial().setTexture("y_texture", sharedTextureY);
-                quad.getRenderData().getMaterial().setTexture("uv_texture", sharedTextureUV);
-                Log.i("mmarinov", "run11 " + Integer.toHexString(GLES30.glGetError()) + ", " + textureNames[0] + ", " + textureNames[1]);
+                material.setTexture("y_texture", sharedTextureY);
+                material.setTexture("uv_texture", sharedTextureUV);
             }
         });
     }

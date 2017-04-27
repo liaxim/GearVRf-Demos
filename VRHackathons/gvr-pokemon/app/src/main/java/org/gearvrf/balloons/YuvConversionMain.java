@@ -20,10 +20,10 @@ import android.opengl.GLES30;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
+import org.gearvrf.GVRNioBufferTexture;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
-import org.gearvrf.GVRSharedTexture;
-import org.gearvrf.GVRTexture;
+import org.gearvrf.GVRTextureParameters;
 import org.gearvrf.scene_objects.GVRCameraSceneObject;
 
 import java.nio.ByteBuffer;
@@ -34,7 +34,6 @@ import java.nio.ByteOrder;
  */
 public class YuvConversionMain extends GVRMain {
 
-    final int[] textureNames = new int[2];
     public void onPreviewFrame(byte[] image) {
         final YuvConversionActivity ba = (YuvConversionActivity)getGVRContext().getActivity();
         yBuffer.put(image, 0, ba.width*ba.height);
@@ -42,31 +41,13 @@ public class YuvConversionMain extends GVRMain {
         uvBuffer.put(ba.previewCallbackBuffer, ba.width*ba.height, ba.width*ba.height/2);
         uvBuffer.position(0);
 
-        getGVRContext().runOnGlThread(new Runnable() {
-            @Override
-            public void run() {
-                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureNames[0]);
-                GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, ba.width, ba.height, 0,
-                        GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, yBuffer);
-                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
-                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
-                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-
-                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureNames[1]);
-                GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, ba.width/2, ba.height/2,
-                        0, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, uvBuffer);
-                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
-                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
-                GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-
-                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
-            }
-        });
+        //for simplicity's sake not trying to guarantee both are updated on time for the next frame; one
+        //way would be to run both for a gl runnable (GVRContext.runOnGlThread)
+        mYBufferTexture.postBuffer(GLES30.GL_LUMINANCE, ba.width, ba.height, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, yBuffer);
+        mUVBufferTexture.postBuffer(GLES30.GL_LUMINANCE_ALPHA, ba.width / 2, ba.height / 2, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, uvBuffer);
     }
 
-    private GVRScene mScene = null;
+    private GVRScene mScene;
     private YuvConversionActivity mActivity;
     private GVRCameraSceneObject cameraObject;
 
@@ -91,26 +72,20 @@ public class YuvConversionMain extends GVRMain {
         final GVRSceneObject quad = new GVRSceneObject(context, 3f, 1.5f);
         final GVRMaterial material = new GVRMaterial(context, GVRMaterial.GVRShaderType.BeingGenerated.ID);
         quad.getRenderData().setMaterial(material);
-        //add the textures ahead of time to have them picked up by the shader generation
-        material.setTexture("y_texture", (GVRTexture)null);
-        material.setTexture("uv_texture", (GVRTexture)null);
+
+        mYBufferTexture = new GVRNioBufferTexture(context, new GVRTextureParameters(getGVRContext()));
+        mUVBufferTexture = new GVRNioBufferTexture(context, new GVRTextureParameters(getGVRContext()));
+        material.setTexture("y_texture", mYBufferTexture);
+        material.setTexture("uv_texture", mUVBufferTexture);
+
         quad.getRenderData().setShaderTemplate(YUV2RGBShader.class);
         quad.getTransform().setPosition(0,0,-2);
         mScene.getMainCameraRig().addChildObject(quad);
         mScene.bindShaders();
-
-        context.runOnGlThread(new Runnable() {
-            @Override
-            public void run() {
-                GLES30.glGenTextures(2, textureNames, 0);
-
-                GVRSharedTexture sharedTextureY = new GVRSharedTexture(context, textureNames[0]);
-                GVRSharedTexture sharedTextureUV = new GVRSharedTexture(context, textureNames[1]);
-                material.setTexture("y_texture", sharedTextureY);
-                material.setTexture("uv_texture", sharedTextureUV);
-            }
-        });
     }
+
+    private GVRNioBufferTexture mYBufferTexture;
+    private GVRNioBufferTexture mUVBufferTexture;
     private ByteBuffer yBuffer;
     private ByteBuffer uvBuffer;
 

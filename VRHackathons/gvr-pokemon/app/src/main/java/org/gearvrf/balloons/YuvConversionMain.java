@@ -23,15 +23,12 @@ import org.gearvrf.GVRMaterial;
 import org.gearvrf.GVRNioBufferTexture;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
-import org.gearvrf.GVRTextureParameters;
 import org.gearvrf.scene_objects.GVRCameraSceneObject;
+import org.gearvrf.utility.YuvNv21ToRgbShader;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-/**
- * Adapted from this excellent post: http://stackoverflow.com/a/22456885
- */
 public class YuvConversionMain extends GVRMain {
 
     public void onPreviewFrame(byte[] image) {
@@ -73,12 +70,12 @@ public class YuvConversionMain extends GVRMain {
         final GVRMaterial material = new GVRMaterial(context, GVRMaterial.GVRShaderType.BeingGenerated.ID);
         quad.getRenderData().setMaterial(material);
 
-        mYBufferTexture = new GVRNioBufferTexture(context, new GVRTextureParameters(getGVRContext()));
-        mUVBufferTexture = new GVRNioBufferTexture(context, new GVRTextureParameters(getGVRContext()));
+        mYBufferTexture = new GVRNioBufferTexture(context);
+        mUVBufferTexture = new GVRNioBufferTexture(context);
         material.setTexture("y_texture", mYBufferTexture);
         material.setTexture("uv_texture", mUVBufferTexture);
 
-        quad.getRenderData().setShaderTemplate(YUV2RGBShader.class);
+        quad.getRenderData().setShaderTemplate(YuvNv21ToRgbShader.class);
         quad.getTransform().setPosition(0,0,-2);
         mScene.getMainCameraRig().addChildObject(quad);
         mScene.bindShaders();

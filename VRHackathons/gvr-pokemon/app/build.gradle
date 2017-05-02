@@ -13,17 +13,23 @@ allprojects {
 }
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 21
     buildToolsVersion '25.0.0'
 
     defaultConfig {
         applicationId "com.samsung.android.gvr.sample"
-        minSdkVersion 19
-        targetSdkVersion 19
+        minSdkVersion 21
+        targetSdkVersion 21
     }
 
     buildTypes {
+        debug {
+            debuggable = true
+            jniDebuggable = true
+        }
         release {
+            debuggable = true
+            jniDebuggable = true
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
@@ -47,10 +53,13 @@ project.ext.jomlVersion = "1.9.1-SNAPSHOT"
 dependencies {
     compile "org.joml:joml-android:${jomlVersion}"
     compile 'com.google.code.gson:gson:2.7'
-    compile project (':framework')
-    compile project (':backend_oculus')
-//    debugCompile(name:'framework-debug', ext:'aar')
-//    debugCompile(name: 'backend_oculus-debug', ext: 'aar')
-//    releaseCompile(name:'framework-release', ext:'aar')
-//    releaseCompile(name: 'backend_oculus-release', ext: 'aar')
+//    compile project (':framework')
+//    compile project (':backend_oculus')
+    debugCompile(name:'framework-debug', ext:'aar')
+    debugCompile(name: 'backend_oculus-debug', ext: 'aar')
+//    compile 'com.google.vr:sdk-base:1.30.0'
+//    debugCompile(name: 'backend_daydream-debug', ext: 'aar')
+//    debugCompile(name: 'backend-debug', ext: 'aar')
+    releaseCompile(name:'framework-release', ext:'aar')
+    releaseCompile(name: 'backend_oculus-release', ext: 'aar')
 }

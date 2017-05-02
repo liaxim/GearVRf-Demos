@@ -120,7 +120,7 @@ if(rootProject.useLocalDependencies) {
             compile 'com.google.vr:sdk-base:1.30.0'
         } else {
             if (rootProject.hasProperty("no_oculus")) {
-                compile project (':backend')
+                compile project (':backend_pure')
             } else { //default oculus+daydream
                 compile project(':backend_oculus')
                 compile project(':backend_daydream')

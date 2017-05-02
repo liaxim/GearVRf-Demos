@@ -17,12 +17,13 @@ package org.gearvrf.balloons;
 
 import android.opengl.GLES30;
 
+import org.gearvrf.GVRBitmapTexture;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
-import org.gearvrf.GVRNioBufferTexture;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
+import org.gearvrf.GVRTextureParameters;
 import org.gearvrf.scene_objects.GVRCameraSceneObject;
 import org.gearvrf.utility.YuvNv21ToRgbShader;
 
@@ -40,8 +41,8 @@ public class YuvConversionMain extends GVRMain {
 
         //for simplicity's sake not trying to guarantee both are updated on time for the next frame; one
         //way would be to run both for a gl runnable (GVRContext.runOnGlThread)
-        mYBufferTexture.postBuffer(GLES30.GL_LUMINANCE, ba.width, ba.height, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, yBuffer);
-        mUVBufferTexture.postBuffer(GLES30.GL_LUMINANCE_ALPHA, ba.width / 2, ba.height / 2, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, uvBuffer);
+        mYBufferTexture.postBuffer(ba.width, ba.height, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, yBuffer);
+        mUVBufferTexture.postBuffer(ba.width / 2, ba.height / 2, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, uvBuffer);
     }
 
     private GVRScene mScene;
@@ -70,8 +71,16 @@ public class YuvConversionMain extends GVRMain {
         final GVRMaterial material = new GVRMaterial(context, GVRMaterial.GVRShaderType.BeingGenerated.ID);
         quad.getRenderData().setMaterial(material);
 
-        mYBufferTexture = new GVRNioBufferTexture(context);
-        mUVBufferTexture = new GVRNioBufferTexture(context);
+        final GVRTextureParameters yTextureParameters = new GVRTextureParameters(getGVRContext());
+        yTextureParameters.setInternalFormat(GLES30.GL_LUMINANCE).setWidth(ba.width).setHeight(ba.height)
+                .setFormat(GLES30.GL_LUMINANCE).setType(GLES30.GL_UNSIGNED_BYTE);
+        mYBufferTexture = new GVRBitmapTexture(context, yTextureParameters);
+
+        final GVRTextureParameters uvTextureParameters = new GVRTextureParameters(getGVRContext());
+        uvTextureParameters.setInternalFormat(GLES30.GL_LUMINANCE_ALPHA).setWidth(ba.width/2).setHeight(ba.height/2)
+                .setFormat(GLES30.GL_LUMINANCE_ALPHA).setType(GLES30.GL_UNSIGNED_BYTE);
+        mUVBufferTexture = new GVRBitmapTexture(context, uvTextureParameters);
+
         material.setTexture("y_texture", mYBufferTexture);
         material.setTexture("uv_texture", mUVBufferTexture);
 
@@ -81,8 +90,8 @@ public class YuvConversionMain extends GVRMain {
         mScene.bindShaders();
     }
 
-    private GVRNioBufferTexture mYBufferTexture;
-    private GVRNioBufferTexture mUVBufferTexture;
+    private GVRBitmapTexture mYBufferTexture;
+    private GVRBitmapTexture mUVBufferTexture;
     private ByteBuffer yBuffer;
     private ByteBuffer uvBuffer;
 

@@ -16,8 +16,12 @@
 package org.gearvrf.gvr360Photo;
 
 import android.os.Bundle;
+import android.view.MotionEvent;
 
 import org.gearvrf.GVRActivity;
+import org.gearvrf.GVRContext;
+
+import java.lang.reflect.Method;
 
 public class Minimal360PhotoActivity extends GVRActivity
 {
@@ -27,7 +31,52 @@ public class Minimal360PhotoActivity extends GVRActivity
     {
         super.onCreate(savedInstanceState);
 
-        Minimal360PhotoMain main = new Minimal360PhotoMain();
+        final Minimal360PhotoMain main = new Minimal360PhotoMain();
         setMain(main);
+
+        mDetector = new VRTouchPadGestureDetector(new VRTouchPadGestureDetector.OnTouchPadGestureListener() {
+
+            @Override
+            public boolean onSingleTap(MotionEvent e) {
+                main.onTap();
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+            }
+
+            @Override
+            public boolean onSwipe(MotionEvent e, VRTouchPadGestureDetector.SwipeDirection swipeDirection, float velocityX, float velocityY) {
+                try {
+                    final GVRContext ctx = main.getGVRContext();
+
+                    if (swipeDirection == VRTouchPadGestureDetector.SwipeDirection.Up) {
+                        final Method m = ctx.getClass().getMethod("changeIPDMeters", float.class);
+                        m.invoke(ctx, 0.001f);
+                    } else if (swipeDirection == VRTouchPadGestureDetector.SwipeDirection.Down) {
+                        final Method m = ctx.getClass().getMethod("changeIPDMeters", float.class);
+                        m.invoke(ctx, -0.001f);
+                    } else if (swipeDirection == VRTouchPadGestureDetector.SwipeDirection.Backward) {
+                        final Method m = ctx.getClass().getMethod("changeShiftScreenCenterMeters", float.class);
+                        m.invoke(ctx, 0.001f);
+                    } else if (swipeDirection == VRTouchPadGestureDetector.SwipeDirection.Forward) {
+                        final Method m = ctx.getClass().getMethod("changeShiftScreenCenterMeters", float.class);
+                        m.invoke(ctx, -0.001f);
+                    }
+                } catch (final Exception exc) {
+                    exc.printStackTrace();
+                }
+                return false;
+            }
+        });
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        mDetector.onTouchEvent(event);
+        return super.onTouchEvent(event);
+    }
+
+    private VRTouchPadGestureDetector mDetector;
 }

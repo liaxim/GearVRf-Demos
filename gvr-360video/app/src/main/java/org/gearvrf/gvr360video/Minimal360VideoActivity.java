@@ -36,6 +36,7 @@ import org.gearvrf.GVRActivity;
 import org.gearvrf.scene_objects.GVRVideoSceneObject;
 import org.gearvrf.scene_objects.GVRVideoSceneObjectPlayer;
 
+import java.io.File;
 import java.io.IOException;
 
 import static android.view.MotionEvent.ACTION_DOWN;
@@ -93,14 +94,19 @@ public class Minimal360VideoActivity extends GVRActivity {
 
     private GVRVideoSceneObjectPlayer<MediaPlayer> makeMediaPlayer() {
         final MediaPlayer mediaPlayer = new MediaPlayer();
-        final AssetFileDescriptor afd;
 
         try {
-            afd = getAssets().openFd("videos_s_3.mp4");
-            android.util.Log.d("Minimal360Video", "Assets was found.");
-            mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-            android.util.Log.d("Minimal360Video", "DataSource was set.");
-            afd.close();
+            final File file = new File("/sdcard/video.mp4");
+            if (!file.exists()) {
+                final AssetFileDescriptor afd = getAssets().openFd("video.mp4");
+                android.util.Log.d("Minimal360Video", "Assets was found.");
+                mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+                android.util.Log.d("Minimal360Video", "DataSource was set.");
+                afd.close();
+            } else {
+                mediaPlayer.setDataSource(file.getAbsolutePath());
+            }
+
             mediaPlayer.prepare();
         } catch (IOException e) {
             e.printStackTrace();

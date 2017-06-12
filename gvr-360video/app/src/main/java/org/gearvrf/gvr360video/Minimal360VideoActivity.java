@@ -20,6 +20,7 @@ import android.media.MediaCodec;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.Surface;
 
 import com.google.android.exoplayer.ExoPlaybackException;
@@ -36,6 +37,8 @@ import org.gearvrf.scene_objects.GVRVideoSceneObject;
 import org.gearvrf.scene_objects.GVRVideoSceneObjectPlayer;
 
 import java.io.IOException;
+
+import static android.view.MotionEvent.ACTION_DOWN;
 
 public class Minimal360VideoActivity extends GVRActivity {
 
@@ -188,6 +191,22 @@ public class Minimal360VideoActivity extends GVRActivity {
         };
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (null != videoSceneObjectPlayer) {
+            if (ACTION_DOWN == event.getAction()) {
+                if (mPlaying) {
+                    videoSceneObjectPlayer.pause();
+                } else {
+                    videoSceneObjectPlayer.start();
+                }
+                mPlaying = !mPlaying;
+            }
+        }
+        return super.onTouchEvent(event);
+    }
+
+    private boolean mPlaying = true;
     private GVRVideoSceneObjectPlayer<?> videoSceneObjectPlayer;
 
     static final boolean USE_EXO_PLAYER = false;

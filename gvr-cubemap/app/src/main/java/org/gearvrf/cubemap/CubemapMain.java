@@ -27,6 +27,7 @@ import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.scene_objects.GVRCubeSceneObject;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 
 public class CubemapMain extends GVRMain {
@@ -93,7 +94,11 @@ public class CubemapMain extends GVRMain {
         }
 
         GVRTexture t = getGVRContext().getAssetLoader().loadTexture(new GVRAndroidResource(getGVRContext(), resource));
-        mSceneObject = new GVRSceneObject(mGVRContext, 20,20, t);
+        if (mEnvironmentType == FrozenEia) {
+            mSceneObject = new GVRSceneObject(mGVRContext, 13.8f*1.44f, 13.8f*1.08f, t);
+        } else {
+            mSceneObject = new GVRSceneObject(mGVRContext, 20, 20, t);
+        }
         mSceneObject.getTransform().setPositionZ(-11);
         scene.addSceneObject(mSceneObject);
     }
@@ -115,6 +120,44 @@ public class CubemapMain extends GVRMain {
                     apply(mGVRContext.getMainScene());
                 }
             });
+        }
+    }
+
+    void onSwipeUp() {
+        final Method setLCRedFactor;
+        try {
+            setLCRedFactor = getGVRContext().getClass().getMethod("setLCRedFactor", float.class);
+            setLCRedFactor.invoke(getGVRContext(), 0.1f);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void onSwipeDown() {
+        final Method setLCRedFactor;
+        try {
+            setLCRedFactor = getGVRContext().getClass().getMethod("setLCRedFactor", float.class);
+            setLCRedFactor.invoke(getGVRContext(), -0.1f);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void onSwipeForward() {
+        try {
+            final Method setLCBlueFactor = getGVRContext().getClass().getMethod("setLCBlueFactor", float.class);
+            setLCBlueFactor.invoke(getGVRContext(), 0.1f);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void onSwipeBackward() {
+        try {
+            final Method setLCBlueFactor = getGVRContext().getClass().getMethod("setLCBlueFactor", float.class);
+            setLCBlueFactor.invoke(getGVRContext(), -0.1f);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

@@ -22,20 +22,49 @@ import android.view.MotionEvent;
 
 public class CubemapActivity extends GVRActivity {
 
+    private VRTouchPadGestureDetector mDetector;
     CubemapMain main = new CubemapMain();
 
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setMain(main, "gvr.xml");
+        mDetector = new VRTouchPadGestureDetector(new VRTouchPadGestureDetector.OnTouchPadGestureListener() {
+            @Override
+            public boolean onSingleTap(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onSwipe(MotionEvent e, VRTouchPadGestureDetector.SwipeDirection swipeDirection, float velocityX, float velocityY) {
+                if (VRTouchPadGestureDetector.SwipeDirection.Up == swipeDirection) {
+                    main.onSwipeUp();
+                } else if (VRTouchPadGestureDetector.SwipeDirection.Down == swipeDirection) {
+                    main.onSwipeDown();
+                } else if (VRTouchPadGestureDetector.SwipeDirection.Forward == swipeDirection) {
+                    main.onSwipeForward();
+                } else if (VRTouchPadGestureDetector.SwipeDirection.Backward == swipeDirection) {
+                    main.onSwipeBackward();
+                }
+                return false;
+            }
+        });
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        //mDetector.onTouchEvent(event);
+
         if (event.getAction() == MotionEvent.ACTION_UP) {
             main.onTouch();
             return true;
         }
+
         return super.onTouchEvent(event);
     }
 }

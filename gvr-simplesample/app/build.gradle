@@ -21,4 +21,9 @@ android {
         jni.srcDirs = [] // no auto generation of Android.mk
         jniLibs.srcDir 'libs' // pre-compiled libraries
     }
+    packagingOptions {
+        exclude 'lib/armeabi-v7a/libbinder.so'
+        pickFirst "lib/armeabi-v7a/libgnustl_shared.so"
+        pickFirst "lib/armeabi-v7a/libc++_shared.so"
+    }
 }

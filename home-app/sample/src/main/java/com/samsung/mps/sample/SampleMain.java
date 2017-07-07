@@ -203,9 +203,9 @@ public class SampleMain extends GVRMain implements VRTouchPadGestureDetector.OnT
         GVRSceneObject border = new GVRSceneObject(gvrContext, gvrContext.createQuad(16.2f,
                 9.2f));
         GVRMaterial material = new GVRMaterial(gvrContext);
-        Future<GVRTexture> futureTexture = gvrContext.loadFutureTexture(new GVRAndroidResource
+        GVRTexture texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource
                 (gvrContext, "texture.png"));
-        material.setMainTexture(futureTexture);
+        material.setMainTexture(texture);
         border.getRenderData().setMaterial(material);
         border.getTransform().setPosition(borderX, 0.0f, borderZ);
         border.getTransform().rotateByAxis(angle, 0.0f, 1.0f, 0.0f);
@@ -234,8 +234,7 @@ public class SampleMain extends GVRMain implements VRTouchPadGestureDetector.OnT
         for (File file : list) {
             Future<GVRTexture> futureCubemapTexture = null;
             try {
-                futureCubemapTexture = gvrContext
-                        .loadFutureCubemapTexture(
+                futureCubemapTexture = gvrContext.getAssetLoader().loadFutureCubemapTexture(
                                 new GVRAndroidResource(fullPath + File.separator + file.getName()));
                 skyboxes.add(futureCubemapTexture);
             } catch (FileNotFoundException e) {
@@ -311,7 +310,7 @@ public class SampleMain extends GVRMain implements VRTouchPadGestureDetector.OnT
         GVRMaterial material = new GVRMaterial(gvrContext);
         try {
             String fullPath = APP_PATH + filename;
-            Future<GVRTexture> futureTexture = gvrContext.loadFutureTexture(new GVRAndroidResource
+            Future<GVRTexture> futureTexture = gvrContext.getAssetLoader().loadFutureTexture(new GVRAndroidResource
                     (fullPath));
             material.setMainTexture(futureTexture);
             quad.getRenderData().setMaterial(material);

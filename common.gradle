@@ -29,11 +29,11 @@ android {
         debug {
             debuggable = true
             jniDebuggable = true
-            resValue 'string', 'app_name', System.getProperty("appName")
+            //resValue 'string', 'app_name', System.getProperty("appName")
         }
         release {
             signingConfig signingConfigs.debug
-            resValue 'string', 'app_name', System.getProperty("appName")
+            //resValue 'string', 'app_name', System.getProperty("appName")
         }
     }
 

@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 
-System.setProperty("appName", "home-app")
+//System.setProperty("appName", "home-app")
 
 if(file("../../common.gradle").exists()) {
     apply from: '../../common.gradle'
@@ -25,11 +25,11 @@ android {
     productFlavors {
         lateralCorrection {
             applicationIdSuffix ".lateralCorrection"
-            resValue 'string', 'app_name', "home-app-lateralCorrection"
+            resValue 'string', 'app_name', "home-app-suwon"
         }
         noLateralCorrection {
-            applicationIdSuffix ".noLateralCorrection"
-            resValue 'string', 'app_name', "home-app-noLateralCorrection"
+            applicationIdSuffix ".ttt"
+            resValue 'string', 'app_name', "homeapp-TTT"
         }
     }
 }

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:alwaysDrawnWithCache="true"
+    android:clickable="true"
+    android:orientation="vertical"
+    android:weightSum="1">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-condensed"
+        android:padding="12dip"
+        android:text="Object Menu"
+        android:textAlignment="center"
+        android:textAllCaps="false"
+        android:textSize="36sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dip"
+        android:text="Type"
+        android:textSize="30sp" />
+
+    <ListView
+        android:id="@+id/selection"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_weight="0.02" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dip"
+        android:text="Size"
+        android:textSize="30sp" />
+
+    <SeekBar
+        android:id="@+id/sizeSeekBar"
+        style="@android:style/Widget.Material.SeekBar.Discrete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.09"
+        android:max="5"
+        android:progress="1"
+        android:progressTint="@android:color/holo_purple"
+        android:thumbTint="@android:color/darker_gray"
+        android:tickMarkTint="@android:color/background_dark"
+        android:tickMarkTintMode="src_over" />
+
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dip"
+        android:text="Color"
+        android:textSize="30sp" />
+
+    <ListView
+        android:id="@+id/colors"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_weight="0.02" />
+
+</LinearLayout>

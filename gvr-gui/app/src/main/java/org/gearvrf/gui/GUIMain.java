@@ -15,23 +15,27 @@
 
 package org.gearvrf.gui;
 
-import org.gearvrf.FutureWrapper;
 import org.gearvrf.GVRAndroidResource;
+import org.gearvrf.GVRBaseSensor;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRCursorController;
 import org.gearvrf.GVRLight;
 import org.gearvrf.GVRMaterial;
-import org.gearvrf.GVRMesh;
+import org.gearvrf.GVRMeshCollider;
 import org.gearvrf.GVRPhongShader;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRMain;
+import org.gearvrf.GVRSphereCollider;
+import org.gearvrf.GVRTexture;
+import org.gearvrf.ISensorEvents;
 import org.gearvrf.io.CursorControllerListener;
 import org.gearvrf.io.GVRControllerType;
 import org.gearvrf.io.GVRInputManager;
 import org.gearvrf.scene_objects.GVRCubeSceneObject;
 import org.gearvrf.scene_objects.GVRCylinderSceneObject;
 import org.gearvrf.scene_objects.GVRGUISceneObject;
+import org.gearvrf.scene_objects.GVRGearControllerSceneObject;
 import org.gearvrf.scene_objects.GVRSphereSceneObject;
 import org.gearvrf.scene_objects.GVRViewSceneObject;
 import org.gearvrf.scene_objects.view.GVRFrameLayout;
@@ -39,8 +43,6 @@ import org.gearvrf.scene_objects.view.GVRFrameLayout;
 
 public class GUIMain extends GVRMain {
     private static final String TAG = GUIMain.class.getSimpleName();
-    private static final int KEY_EVENT = 1;
-    private static final int MOTION_EVENT = 2;
 
     private GVRViewSceneObject layoutSceneObject;
     private GVRContext context;
@@ -54,15 +56,18 @@ public class GUIMain extends GVRMain {
     private GVRCylinderSceneObject cylinder;
     private GVRMaterial mat;
     private GVRSceneObject currentObject;
-    private GVRSceneObject sphere2;
+    private GVRSceneObject plane;
 
 
     private GVRScene mainScene;
     private GVRSceneObject cursor;
 
     public GUIMain(GUIActivity activity,
-                       final GVRFrameLayout frameLayout) {
+                   final GVRFrameLayout frameLayout) {
         this.frameLayout = frameLayout;
+        final String keyPressed = activity.getResources()
+                .getString(R.string.keyCode);
+
     }
 
     @Override
@@ -84,6 +89,7 @@ public class GUIMain extends GVRMain {
         cylinder.getRenderData().setShaderTemplate(GVRPhongShader.class);
         cylinder.getRenderData().setMaterial(mat);
         cylinder.getRenderData().enableLight();
+        plane = new GVRSceneObject(gvrContext, gvrContext.createQuad(1.0f, 1.0f));
 
         currentObject = sphere;
         GVRLight mLight = new GVRLight(gvrContext);
@@ -96,7 +102,7 @@ public class GUIMain extends GVRMain {
         lightObject.getTransform().setPosition(25.0f, 50.0f, 25.0f);
         lightObject.attachLight(mLight);
 
-        layoutSceneObject = new GVRGUISceneObject(gvrContext, frameLayout, 3f, 60f);
+        layoutSceneObject = new GVRGUISceneObject(gvrContext, frameLayout, 3f, 45f);
         mainScene = gvrContext.getMainScene();
         mainScene.addSceneObject(layoutSceneObject);
         mainScene.addSceneObject(currentObject);
@@ -104,15 +110,18 @@ public class GUIMain extends GVRMain {
 
         layoutSceneObject.getTransform().setScale(1.0f, 1.0f, 1.0f);
         layoutSceneObject.getTransform().setPosition(-1.5f*DEPTH, 0.0f, 1.5f*DEPTH);
-        currentObject.getTransform().setPosition(3*DEPTH, 0.0f, 5*DEPTH);
+        currentObject.getTransform().setPosition(0*DEPTH, 0.0f, 5*DEPTH);
+        plane.getTransform().setPosition(3*DEPTH, 0.0f, 3.25f*DEPTH);
+        plane.getTransform().setScale(5,5,5);
+        plane.getRenderData().setMaterial(mat);
         layoutSceneObject.getTransform().setRotationByAxis(-45.0f, 0.0f, 1.0f, 0.0f);
         layoutSceneObject.setName("GUIObject");
 
         // set up the input manager for the main scene
         GVRInputManager inputManager = gvrContext.getInputManager();
-        inputManager.addCursorControllerListener(listener);
+        inputManager.addCursorControllerListener(cursorControllerListener);
         for (GVRCursorController cursor : inputManager.getCursorControllers()) {
-            listener.onCursorControllerAdded(cursor);
+            cursorControllerListener.onCursorControllerAdded(cursor);
         }
     }
 
@@ -188,42 +197,72 @@ public class GUIMain extends GVRMain {
         }
     }
 
-    private CursorControllerListener listener = new CursorControllerListener() {
-
+    private CursorControllerListener cursorControllerListener = new CursorControllerListener() {
         @Override
-        public void onCursorControllerRemoved(GVRCursorController controller) {
-            if (controller.getControllerType() == GVRControllerType.GAZE) {
-                if (cursor != null) {
-                    mainScene.getMainCameraRig().removeChildObject(cursor);
-                }
-                controller.setEnable(false);
+        public void onCursorControllerAdded(GVRCursorController gvrCursorController) {
+            if (gvrCursorController.getControllerType() == GVRControllerType.CONTROLLER) {
+                android.util.Log.d(TAG, "Got the orientation remote controller");
+
+                GVRGearControllerSceneObject controller = new GVRGearControllerSceneObject(context);
+                GVRTexture cursorTexture = context.getAssetLoader().loadTexture(new GVRAndroidResource(context, R.raw.cursor));
+                GVRSceneObject cursor = new GVRSceneObject(context,
+                        context.createQuad(0.25f, 0.25f),
+                        cursorTexture);
+                cursor.getRenderData().setDepthTest(false);
+                cursor.getRenderData().setRenderingOrder(10000);
+                cursor.setName("Cursor");
+                controller.setRayDepth(2.5f);
+                controller.setCursor(cursor);
+                controller.setName("GEARController");
+                //controller.disableRay();
+                controller.setCursorController(gvrCursorController);
+                controller.enableSurfaceProjection();
+                //controller.enableFastCursorProjection();
+                ISensorEvents projectionListener = controller.getProjectionListener();
+
+                layoutSceneObject.getEventReceiver().addListener(projectionListener);
+
+                cube.attachCollider(new GVRMeshCollider(context, cube.getRenderData().getMesh(), true));
+                cube.setSensor(new GVRBaseSensor(context));
+                cube.getEventReceiver().addListener(projectionListener);
+                cube.setName("Cube");
+
+                sphere.attachCollider(new GVRMeshCollider(context, sphere.getRenderData().getMesh(), true));
+                sphere.setSensor(new GVRBaseSensor(context));
+                sphere.getEventReceiver().addListener(projectionListener);
+                sphere.setName("Sphere");
+
+                cylinder.attachCollider(new GVRSphereCollider(getGVRContext()));
+                cylinder.setSensor(new GVRBaseSensor(context));
+                cylinder.getEventReceiver().addListener(projectionListener);
+
+                gvrCursorController.setNearDepth(DEPTH);
+                gvrCursorController.setFarDepth(DEPTH);
             }
-        }
-
-        @Override
-        public void onCursorControllerAdded(GVRCursorController controller) {
-            // Only allow only gaze
-            if (controller.getControllerType() == GVRControllerType.GAZE) {
+            else if (gvrCursorController.getControllerType() == GVRControllerType.GAZE) {
                 cursor = new GVRSceneObject(context,
-                        new FutureWrapper<GVRMesh>(context.createQuad(0.1f, 0.1f)),
-                        context.getAssetLoader().loadFutureTexture(new GVRAndroidResource(context, R.raw.cursor)));
+                        context.createQuad(0.1f, 0.1f),
+                        context.getAssetLoader().loadTexture(new GVRAndroidResource(context, R.raw.cursor)));
                 cursor.getTransform().setPosition(0.0f, 0.0f, DEPTH);
                 mainScene.getMainCameraRig().addChildObject(cursor);
                 cursor.getRenderData().setDepthTest(false);
                 cursor.getRenderData().setRenderingOrder(100000);
-                controller.setPosition(0.0f, 0.0f, DEPTH);
-                controller.setNearDepth(DEPTH);
-                controller.setFarDepth(DEPTH);
+                gvrCursorController.setPosition(0.0f, 0.0f, DEPTH);
+                gvrCursorController.setNearDepth(DEPTH);
+                gvrCursorController.setFarDepth(DEPTH);
             }
             else {
-                    // disable all other types
-                controller.setEnable(false);
+                //do nothing
+            }
+        }
+
+        @Override
+        public void onCursorControllerRemoved(GVRCursorController gvrCursorController) {
+            if (gvrCursorController.getControllerType() == GVRControllerType.CONTROLLER) {
+                android.util.Log.d(TAG, "Got the orientation remote controller");
             }
         }
     };
-
-
-
 
     @Override
     public void onStep() {

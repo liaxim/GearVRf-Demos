@@ -38,7 +38,9 @@ public class SampleActivity extends GVRActivity {
         @Override
         public void onInit(GVRContext gvrContext) {
             GVRScene scene = gvrContext.getMainScene();
-            scene.setBackgroundColor(1, 1, 1, 1);
+            //scene.setBackgroundColor(1, 1, 1, 1);
+            scene.getMainCameraRig().getLeftCamera().setBackgroundColor(1,0,0,1);
+            scene.getMainCameraRig().getRightCamera().setBackgroundColor(0, 1,0,1);
 
             GVRTexture texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.gearvr_logo));
 

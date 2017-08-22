@@ -16,33 +16,51 @@
 package org.gearvrf.gvr360video;
 
 import android.content.res.AssetFileDescriptor;
-import android.media.MediaCodec;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.view.MotionEvent;
+import android.os.Handler;
+import android.util.Log;
 import android.view.Surface;
 
-import com.google.android.exoplayer.ExoPlaybackException;
-import com.google.android.exoplayer.ExoPlayer;
-import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
-import com.google.android.exoplayer.MediaCodecSelector;
-import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
-import com.google.android.exoplayer.extractor.ExtractorSampleSource;
-import com.google.android.exoplayer.upstream.AssetDataSource;
-import com.google.android.exoplayer.upstream.DefaultAllocator;
+import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.RenderersFactory;
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.extractor.ExtractorsFactory;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.LoopingMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelection;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.google.android.exoplayer2.upstream.BandwidthMeter;
+import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.util.Util;
 
 import org.gearvrf.GVRActivity;
 import org.gearvrf.scene_objects.GVRVideoSceneObject;
 import org.gearvrf.scene_objects.GVRVideoSceneObjectPlayer;
 
-import java.io.File;
 import java.io.IOException;
 
-import static android.view.MotionEvent.ACTION_DOWN;
-
 public class Minimal360VideoActivity extends GVRActivity {
+
+    private static final String TAG = "MainActivity";
 
     /**
      * Called when the activity is first created.
@@ -50,6 +68,9 @@ public class Minimal360VideoActivity extends GVRActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //check permissions before doing anything
+
 
         if (!USE_EXO_PLAYER) {
             videoSceneObjectPlayer = makeMediaPlayer();
@@ -95,19 +116,18 @@ public class Minimal360VideoActivity extends GVRActivity {
 
     private GVRVideoSceneObjectPlayer<MediaPlayer> makeMediaPlayer() {
         final MediaPlayer mediaPlayer = new MediaPlayer();
+        final AssetFileDescriptor afd;
+        final String url;
 
         try {
-            final File file = new File(Environment.getExternalStorageDirectory()+"/gvr-360video/video.mp4");
-            if (!file.exists()) {
-                final AssetFileDescriptor afd = getAssets().openFd("video.mp4");
-                android.util.Log.d("Minimal360Video", "Assets was found.");
-                mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-                android.util.Log.d("Minimal360Video", "DataSource was set.");
-                afd.close();
-            } else {
-                mediaPlayer.setDataSource(file.getAbsolutePath());
-            }
-
+            url = "http://152.14.132.193/hls/local/index.m3u8";
+            //afd = getAssets().openFd("videos_s_3.mp4");
+            android.util.Log.d("Minimal360Video", "Assets was found.");
+            //mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mediaPlayer.setDataSource(url);
+            android.util.Log.d("Minimal360Video", "DataSource was set.");
+            //afd.close();
             mediaPlayer.prepare();
         } catch (IOException e) {
             e.printStackTrace();
@@ -122,18 +142,57 @@ public class Minimal360VideoActivity extends GVRActivity {
         return GVRVideoSceneObject.makePlayerInstance(mediaPlayer);
     }
 
+    //TODO upgrade code to use exoplayer2
     private GVRVideoSceneObjectPlayer<ExoPlayer> makeExoPlayer() {
-        final ExoPlayer player = ExoPlayer.Factory.newInstance(2);
+        //We'll start the upgrade with a track selector
+        Handler mainHandler = new Handler();
+        BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
+        TrackSelection.Factory videoTrackSelectionFactory =
+                new AdaptiveTrackSelection.Factory(bandwidthMeter);
+        TrackSelector trackSelector =
+                new DefaultTrackSelector(videoTrackSelectionFactory);
 
-        final AssetDataSource dataSource = new AssetDataSource(this);
-        final ExtractorSampleSource sampleSource = new ExtractorSampleSource(Uri.parse("asset:///videos_s_3.mp4"),
-                dataSource, new DefaultAllocator(64 * 1024), 64 * 1024 * 256);
 
-        final MediaCodecVideoTrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(this, sampleSource,
-                MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT);
-        final MediaCodecAudioTrackRenderer audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
-                MediaCodecSelector.DEFAULT);
-        player.prepare(videoRenderer, audioRenderer);
+
+
+        //Creating a LoadControl
+        LoadControl loadControl = new DefaultLoadControl();
+
+        //Renderer
+        RenderersFactory renderer = new DefaultRenderersFactory(this);
+
+
+        //Create the player
+        Player.EventListener exoplayerEventListener;
+        final SimpleExoPlayer player = ExoPlayerFactory.newSimpleInstance(renderer,trackSelector,loadControl);
+
+        String urimp4 = "/video.mp4"; //upload file to device and add path/name.mp4
+        Uri mp4VideoUri = Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath()+urimp4);
+
+        Uri mp4HLSUri = Uri.parse("http://152.14.132.193/hls/local/index.m3u8");
+
+        // Measures bandwidth during playback. Can be null if not required.
+        DefaultBandwidthMeter bandwidthMeterA = new DefaultBandwidthMeter();
+
+        //Produces DataSource instances through which media data is loaded.
+        DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "exoplayer2example"), bandwidthMeterA);
+
+        //Produces Extractor instances for parsing the media data.
+        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
+
+        //This is how you might play a local file
+        MediaSource videoSource = new ExtractorMediaSource(mp4VideoUri, dataSourceFactory, extractorsFactory, null, null);
+
+        //MediaSource videoSource = new HlsMediaSource(mp4HLSUri,dataSourceFactory,1,null,null);
+        final LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
+
+        //might need to prepare the player
+
+        //final AssetDataSource dataSource = new AssetDataSource(this);
+        //final ExtractorSampleSource sampleSource = new ExtractorSampleSource(Uri.parse("asset:///videos_s_3.mp4"),
+        //      dataSource, new DefaultAllocator(64 * 1024), 64 * 1024 * 256);
+
+        player.prepare(videoSource);
 
         return new GVRVideoSceneObjectPlayer<ExoPlayer>() {
             @Override
@@ -143,20 +202,38 @@ public class Minimal360VideoActivity extends GVRActivity {
 
             @Override
             public void setSurface(final Surface surface) {
-                player.addListener(new ExoPlayer.Listener() {
+                player.addListener( new Player.EventListener(){
+                    @Override
+                    public void onTimelineChanged(Timeline timeline, Object manifest) {
+                        Log.v(TAG,"Listener-onTimelineChanged...");
+
+                    }
+
+                    @Override
+                    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+                        Log.v(TAG,"Listener-onTracksChanged...");
+
+                    }
+
+                    @Override
+                    public void onLoadingChanged(boolean isLoading) {
+                        Log.v(TAG,"Listener-onLoadingChanged...");
+
+                    }
+
                     @Override
                     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                        Log.e(TAG,"Listener-onPlayerStateChanged...");
+
                         switch (playbackState) {
-                            case ExoPlayer.STATE_BUFFERING:
+                            case Player.STATE_BUFFERING:
                                 break;
-                            case ExoPlayer.STATE_ENDED:
+                            case Player.STATE_ENDED:
                                 player.seekTo(0);
                                 break;
-                            case ExoPlayer.STATE_IDLE:
+                            case Player.STATE_IDLE:
                                 break;
-                            case ExoPlayer.STATE_PREPARING:
-                                break;
-                            case ExoPlayer.STATE_READY:
+                            case Player.STATE_READY:
                                 break;
                             default:
                                 break;
@@ -164,16 +241,31 @@ public class Minimal360VideoActivity extends GVRActivity {
                     }
 
                     @Override
-                    public void onPlayWhenReadyCommitted() {
-                        surface.release();
+                    public void onPlaybackParametersChanged(PlaybackParameters p){
+                        Log.v(TAG, "Listener-onPlaybackParametersChanged...");
+                    }
+
+                    @Override
+                    public void onRepeatModeChanged(int i){
+                        Log.v(TAG, "Listener-onRepeatModeChanged...");
                     }
 
                     @Override
                     public void onPlayerError(ExoPlaybackException error) {
+                        Log.v(TAG,"Listener-onPlayerError...");
+                        player.stop();
+                        player.prepare(loopingSource);
+                        player.setPlayWhenReady(true);
+
+                    }
+
+                    @Override
+                    public void onPositionDiscontinuity() {
+                        Log.v(TAG,"Listener-onPositionDiscontinuity...");
+
                     }
                 });
 
-                player.sendMessage(videoRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
             }
 
             @Override
@@ -198,23 +290,7 @@ public class Minimal360VideoActivity extends GVRActivity {
         };
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (null != videoSceneObjectPlayer) {
-            if (ACTION_DOWN == event.getAction()) {
-                if (mPlaying) {
-                    videoSceneObjectPlayer.pause();
-                } else {
-                    videoSceneObjectPlayer.start();
-                }
-                mPlaying = !mPlaying;
-            }
-        }
-        return super.onTouchEvent(event);
-    }
-
-    private boolean mPlaying = true;
     private GVRVideoSceneObjectPlayer<?> videoSceneObjectPlayer;
 
-    static final boolean USE_EXO_PLAYER = false;
+    static final boolean USE_EXO_PLAYER = true;
 }

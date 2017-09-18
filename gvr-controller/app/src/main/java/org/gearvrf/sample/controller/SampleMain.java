@@ -71,6 +71,23 @@ public class SampleMain extends GVRMain {
 
     private GVRScene mainScene;
 
+    GVRScene scene2;
+    public void onTouchEvent() {
+        if (null == scene2) {
+            scene2 = new GVRScene(getGVRContext());
+        } else {
+            return;
+        }
+
+        mGvrCursorController.resetSceneObject();
+        getGVRContext().setMainScene(scene2);
+        setupScene(scene2, 0);
+//        if (null != controller.getParent()) {
+//            controller.getParent().removeChildObject(controller);
+//        }
+//        controller.setCursorController(mGvrCursorController);
+    }
+
     private enum ButtonState {
         UP,
         DOWN
@@ -91,7 +108,12 @@ public class SampleMain extends GVRMain {
     public void onInit(GVRContext gvrContext) {
         mGVRContext = gvrContext;
         mainScene = mGVRContext.getMainScene();
-        mainScene.getEventReceiver().addListener(mPickHandler);
+
+        setupScene(mainScene, R.drawable.skybox_gridroom);
+    }
+
+    private void setupScene(GVRScene theScene, int skyboxResourceId) {
+        theScene.getEventReceiver().addListener(mPickHandler);
 
         /*
          * Adding Boards
@@ -99,43 +121,43 @@ public class SampleMain extends GVRMain {
         GVRSceneObject object = getColorBoard();
         object.getTransform().setPosition(0.0f, BOARD_OFFSET, DEPTH);
         attachMeshCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorBoard();
         object.getTransform().setPosition(0.0f, -BOARD_OFFSET, DEPTH);
         attachMeshCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorBoard();
         object.getTransform().setPosition(-BOARD_OFFSET, 0.0f, DEPTH);
         attachMeshCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorBoard();
         object.getTransform().setPosition(BOARD_OFFSET, 0.0f, DEPTH);
         attachMeshCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorBoard();
         object.getTransform().setPosition(BOARD_OFFSET, BOARD_OFFSET, DEPTH);
         attachMeshCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorBoard();
         object.getTransform().setPosition(BOARD_OFFSET, -BOARD_OFFSET, DEPTH);
         attachMeshCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorBoard();
         object.getTransform().setPosition(-BOARD_OFFSET, BOARD_OFFSET, DEPTH);
         attachSphereCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorBoard();
         object.getTransform().setPosition(-BOARD_OFFSET, -BOARD_OFFSET, DEPTH);
         attachSphereCollider(object);
-        mainScene.addSceneObject(object);
-        mPicker = new GVRPicker(mGVRContext, mainScene);
+        theScene.addSceneObject(object);
+        mPicker = new GVRPicker(mGVRContext, theScene);
 
         GVRMesh mesh = null;
         try {
@@ -156,24 +178,25 @@ public class SampleMain extends GVRMain {
         object = getColorMesh(0.75f, mesh);
         object.getTransform().setPosition(0.0f, 0.0f, DEPTH);
         attachBoundsCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorMesh(0.75f, mesh);
         object.getTransform().setPosition(4.0f, 0.0f, DEPTH);
         attachBoundsCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorMesh(0.75f, mesh);
         object.getTransform().setPosition(-4.0f, 0.0f, DEPTH);
         attachBoundsCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
         object = getColorMesh(0.75f, mesh);
         object.getTransform().setPosition(0.0f, -4.0f, DEPTH);
         attachBoundsCollider(object);
-        mainScene.addSceneObject(object);
+        theScene.addSceneObject(object);
 
 
+        final GVRContext gvrContext = getGVRContext();
         GVRAssetLoader assetLoader = gvrContext.getAssetLoader();
 
         GVRInputManager inputManager = gvrContext.getInputManager();
@@ -182,15 +205,17 @@ public class SampleMain extends GVRMain {
             cursorControllerListener.onCursorControllerAdded(cursor);
         }
 
-        Future<GVRTexture> futureTexture = assetLoader.loadFutureTexture(new
-                GVRAndroidResource(gvrContext, R.drawable.skybox_gridroom));
-        GVRMaterial material = new GVRMaterial(gvrContext);
-        GVRSphereSceneObject skyBox = new GVRSphereSceneObject(gvrContext, false, material);
-        skyBox.getTransform().setScale(SCALE, SCALE, SCALE);
-        skyBox.getRenderData().getMaterial().setMainTexture(futureTexture);
-        mainScene.addSceneObject(skyBox);
+        if (0 != skyboxResourceId) {
+            Future<GVRTexture> futureTexture = assetLoader.loadFutureTexture(new GVRAndroidResource(gvrContext, skyboxResourceId));
+            GVRMaterial material = new GVRMaterial(gvrContext);
+            GVRSphereSceneObject skyBox = new GVRSphereSceneObject(gvrContext, false, material);
+            skyBox.getTransform().setScale(SCALE, SCALE, SCALE);
+            skyBox.getRenderData().getMaterial().setMainTexture(futureTexture);
+            theScene.addSceneObject(skyBox);
+        }
     }
 
+    GVRCursorController mGvrCursorController;
     private CursorControllerListener cursorControllerListener = new CursorControllerListener() {
         @Override
         public void onCursorControllerAdded(GVRCursorController gvrCursorController) {
@@ -209,6 +234,8 @@ public class SampleMain extends GVRMain {
                 controller.setCursor(cursor);
                 controller.attachComponent(mPicker);
                 gvrCursorController.addControllerEventListener(controllerEventListener);
+
+                mGvrCursorController = gvrCursorController;
             }else{
                 gvrCursorController.setEnable(false);
             }

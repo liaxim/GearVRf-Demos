@@ -22,6 +22,7 @@ import java.util.concurrent.Future;
 
 import org.gearvrf.GVRAndroidResource;
 import org.gearvrf.GVRContext;
+import org.gearvrf.GVRCustomMaterialShaderId;
 import org.gearvrf.GVRMaterial;
 import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
@@ -103,10 +104,12 @@ public class SampleMain extends GVRMain {
         }
 
         GVRVideoSceneObject videoObject = createVideoObject(gvrContext);
+
         GVRTextViewSceneObject textViewSceneObject = new GVRTextViewSceneObject(gvrContext, "Hello World!");
         textViewSceneObject.setGravity(Gravity.CENTER);
         textViewSceneObject.setTextSize(12);
         objectList.add(quadObject);
+        objectList.add(videoObject);
         objectList.add(cubeObject);
         objectList.add(sphereObject);
         objectList.add(cylinderObject);
@@ -115,7 +118,6 @@ public class SampleMain extends GVRMain {
         if(cameraObject != null) {
             objectList.add(cameraObject);
         }
-        objectList.add(videoObject);
         objectList.add(textViewSceneObject);
 
         // turn all objects off, except the first one
@@ -146,16 +148,28 @@ public class SampleMain extends GVRMain {
                 scene.addSceneObject(object);
             }
         }
+        onTap();
+        scene.setBackgroundColor(1,1,0,1);
     }
 
     private GVRVideoSceneObject createVideoObject(GVRContext gvrContext) throws IOException {
-        final AssetFileDescriptor afd = gvrContext.getActivity().getAssets().openFd("tron.mp4");
+        final AssetFileDescriptor afd = gvrContext.getActivity().getAssets().openFd("Monitor1.webm");
         final MediaPlayer mediaPlayer = new MediaPlayer();
         mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
         mediaPlayer.prepare();
+        mediaPlayer.setLooping(true);
         GVRVideoSceneObject video = new GVRVideoSceneObject(gvrContext, 8.0f,
                 4.0f, mediaPlayer, GVRVideoType.MONO);
         video.setName("video");
+
+        final GVRRenderData renderData = video.getRenderData();
+        final GVRTexture mainTexture = renderData.getMaterial().getMainTexture();
+        final GVRMaterial newMaterial = new GVRMaterial(gvrContext, GVRMaterial.GVRShaderType.BeingGenerated.ID);
+        newMaterial.setTexture("diffuseTexture", mainTexture);
+        renderData.setShaderTemplate(Shader.class);
+        renderData.setMaterial(newMaterial);
+        renderData.bindShader(gvrContext.getMainScene());
+
         return video;
     }
 

@@ -162,11 +162,30 @@ public class SampleMain extends GVRMain {
                 4.0f, mediaPlayer, GVRVideoType.MONO);
         video.setName("video");
 
+        float texelWidth = 1.0f / (float) 2560;
+        float texelHeight = 1.0f / (float) 1440;
+        float[] convolutionMatrix = {
+            1.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f,
+            1.0f, 1.0f, 1.0f, 1.0f
+        };
+
         final GVRRenderData renderData = video.getRenderData();
         final GVRTexture mainTexture = renderData.getMaterial().getMainTexture();
         final GVRMaterial newMaterial = new GVRMaterial(gvrContext, GVRMaterial.GVRShaderType.BeingGenerated.ID);
         newMaterial.setTexture("diffuseTexture", mainTexture);
         renderData.setShaderTemplate(Shader.class);
+
+        newMaterial.setFloat("texelWidth", texelWidth);
+        newMaterial.setFloat("texelHeight", texelHeight);
+        newMaterial.setMat4("convolutionMatrix",
+                convolutionMatrix[0], convolutionMatrix[1], convolutionMatrix[2], convolutionMatrix[3],
+                convolutionMatrix[4], convolutionMatrix[5], convolutionMatrix[6], convolutionMatrix[7],
+                convolutionMatrix[8], convolutionMatrix[9], convolutionMatrix[10], convolutionMatrix[11],
+                convolutionMatrix[12], convolutionMatrix[13], convolutionMatrix[14], convolutionMatrix[15]
+        );
+
         renderData.setMaterial(newMaterial);
         renderData.bindShader(gvrContext.getMainScene());
 

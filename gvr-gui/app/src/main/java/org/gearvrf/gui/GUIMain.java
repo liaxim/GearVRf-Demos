@@ -65,8 +65,6 @@ public class GUIMain extends GVRMain {
     public GUIMain(GUIActivity activity,
                    final GVRFrameLayout frameLayout) {
         this.frameLayout = frameLayout;
-        final String keyPressed = activity.getResources()
-                .getString(R.string.keyCode);
 
     }
 

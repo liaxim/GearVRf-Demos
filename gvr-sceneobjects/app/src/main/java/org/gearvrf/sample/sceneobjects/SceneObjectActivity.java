@@ -16,20 +16,21 @@
 package org.gearvrf.sample.sceneobjects;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import org.gearvrf.GVRActivity;
-import org.gearvrf.scene_objects.view.GVRView;
-import org.gearvrf.scene_objects.view.GVRWebView;
 
 public class SceneObjectActivity extends GVRActivity {
     private static final String TAG = "SceneObjectActivity";
     private SampleMain mMain;
     private long lastDownTime = 0;
-    private GVRWebView webView;
+    private WebView webView;
 
     /** Called when the activity is first created. */
     @Override
@@ -38,50 +39,35 @@ public class SceneObjectActivity extends GVRActivity {
         createWebView();
 
         mMain = new SampleMain(this);
-        setMain(mMain);
+        setMain(mMain, "gvr.xml");
     }
 
     private void createWebView() {
-        webView = new GVRWebView(this);
-        webView.setInitialScale(100);
+        webView = new WebView(this);
         webView.measure(2000, 1000);
         webView.layout(0, 0, 2000, 1000);
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
+
         webView.loadUrl("http://gearvrf.org");
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
-            }
-        });
+        webView.setWebViewClient(new WebViewClient());
     }
 
-    GVRView getWebView() {
+    View getWebView() {
         return webView;
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mMain.onPause();
     }
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent event) {
-        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-            lastDownTime = event.getDownTime();
-        }
-
-        if (event.getActionMasked() == MotionEvent.ACTION_UP) {
-            // check if it was a quick tap
-            if (event.getEventTime() - lastDownTime < 200) {
-                // pass it as a tap to the Main
-                mMain.onTap();
-            }
-        }
-
-        return true;
+    public boolean dispatchTouchEvent(MotionEvent motionEvent){
+        if(motionEvent.getToolType(0) == MotionEvent.TOOL_TYPE_UNKNOWN)
+            return false;
+        else
+            return super.dispatchTouchEvent(motionEvent);
     }
+
 }

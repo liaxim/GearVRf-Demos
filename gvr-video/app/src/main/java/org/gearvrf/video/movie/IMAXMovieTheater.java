@@ -18,6 +18,7 @@ package org.gearvrf.video.movie;
 import android.media.MediaPlayer;
 
 import org.gearvrf.GVRAndroidResource;
+import org.gearvrf.GVRAssetLoader;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRExternalTexture;
 import org.gearvrf.GVRMaterial;
@@ -27,6 +28,7 @@ import org.gearvrf.GVRRenderPass;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRShaderId;
 import org.gearvrf.GVRTexture;
+import org.gearvrf.GVRVertexBuffer;
 import org.gearvrf.scene_objects.GVRVideoSceneObject;
 import org.gearvrf.video.shaders.AdditiveShader;
 import org.gearvrf.video.shaders.RadiosityShader;
@@ -45,52 +47,46 @@ public class IMAXMovieTheater extends MovieTheater {
     public IMAXMovieTheater(GVRContext context, MediaPlayer player,
                             GVRExternalTexture screenTexture) {
         super(context);
+
+        final GVRAssetLoader assetLoader = context.getAssetLoader();
         try {
             // background
-            GVRMesh backgroundMesh = context.getAssetLoader().loadMesh(
-                    new GVRAndroidResource(context, "imax/cinema.obj"));
-            GVRTexture backgroundLightOffTexture = context.getAssetLoader().loadTexture(
-                    new GVRAndroidResource(context, "imax/cinema_light_off.png"));
-            GVRTexture backgroundLightOnTexture = context.getAssetLoader().loadTexture(
-                    new GVRAndroidResource(context, "imax/cinema_light_on.png"));
-            GVRMesh backgroundRadiosity = context.getAssetLoader().loadMesh(new GVRAndroidResource(context, "imax/radiosity1.obj"));
-            backgroundMesh.setNormals(backgroundRadiosity.getVertices());
+            GVRMesh backgroundMesh = assetLoader.loadMesh(new GVRAndroidResource(context, "imax/cinema.obj"));
+            GVRTexture backgroundLightOffTexture = assetLoader.loadTexture(new GVRAndroidResource(context, "imax/cinema_light_off.png"));
+            GVRTexture backgroundLightOnTexture = assetLoader.loadTexture(new GVRAndroidResource(context, "imax/cinema_light_on.png"));
+
             background = new GVRSceneObject(context, backgroundMesh, backgroundLightOffTexture);
-            background.getRenderData().setCullFace(GVRRenderPass.GVRCullFaceEnum.None);
-            GVRMesh additiveMesh = context.getAssetLoader().loadMesh(
-                    new GVRAndroidResource(context, "imax/additive.obj"));
-            GVRTexture additiveTexture = context.getAssetLoader().loadTexture(
-                    new GVRAndroidResource(context, "imax/additive.png"));
-            GVRMesh additiveRadiosity = context.getAssetLoader().loadMesh(new GVRAndroidResource(context, "imax/radiosity2.obj"));
-            additiveMesh.setNormals(additiveRadiosity.getVertices());
+            final GVRRenderData backgroundRenderData = background.getRenderData();
+            backgroundRenderData.setCullFace(GVRRenderPass.GVRCullFaceEnum.None);
+
+            GVRMesh additiveMesh = assetLoader.loadMesh(new GVRAndroidResource(context, "imax/additive.obj"));
+            GVRTexture additiveTexture = assetLoader.loadTexture(new GVRAndroidResource(context, "imax/additive.png"));
+
             additive = new GVRSceneObject(context, additiveMesh, additiveTexture);
             additive.getRenderData().setCullFace(GVRRenderPass.GVRCullFaceEnum.None);
             additive.getRenderData().setRenderingOrder(2500);
 
             // radiosity
-            RadiosityShader radiosityShader = new RadiosityShader(context);
+            backgroundRenderData.setMaterial(new GVRMaterial(context, new GVRShaderId(RadiosityShader.class)));
+            final GVRMaterial backgroundMaterial = backgroundRenderData.getMaterial();
+            backgroundMaterial.setTexture(RadiosityShader.TEXTURE_OFF_KEY, backgroundLightOffTexture);
+            backgroundMaterial.setTexture(RadiosityShader.TEXTURE_ON_KEY, backgroundLightOnTexture);
+            backgroundMaterial.setTexture(RadiosityShader.SCREEN_KEY, screenTexture);
 
-            background.getRenderData().setMaterial(new GVRMaterial(context, new GVRShaderId(RadiosityShader.class)));
-            background.getRenderData().getMaterial().setTexture(
-                    RadiosityShader.TEXTURE_OFF_KEY, backgroundLightOffTexture);
-            background.getRenderData().getMaterial().setTexture(
-                    RadiosityShader.TEXTURE_ON_KEY, backgroundLightOnTexture);
-            background.getRenderData().getMaterial().setTexture(
-                    RadiosityShader.SCREEN_KEY, screenTexture);
-            AdditiveShader additiveShader = new AdditiveShader(context);
             additive.getRenderData().setMaterial(new GVRMaterial(context, new GVRShaderId(AdditiveShader.class)));
             additive.getRenderData().getMaterial().setTexture(AdditiveShader.TEXTURE_KEY, additiveTexture);
+
             // screen
-            GVRMesh screenMesh = context.getAssetLoader().loadMesh(new GVRAndroidResource(
-                    context, "imax/screen.obj"));
-            screen = new GVRVideoSceneObject(context, screenMesh, player,
-                    screenTexture, GVRVideoSceneObject.GVRVideoType.MONO);
+            GVRMesh screenMesh = assetLoader.loadMesh(new GVRAndroidResource(context, "imax/screen.obj"));
+            screen = new GVRVideoSceneObject(context, screenMesh, player, screenTexture, GVRVideoSceneObject.GVRVideoType.MONO);
             screen.getRenderData().setCullFace(GVRRenderPass.GVRCullFaceEnum.None);
-            this.addChildObject(background);
-            this.addChildObject(additive);
-            this.addChildObject(screen);
-            this.getTransform().setPosition(3.353f, -0.401f, 0.000003f);
-            this.getTransform().rotateByAxisWithPivot(90.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+            addChildObject(background);
+            addChildObject(additive);
+            addChildObject(screen);
+
+            getTransform().setPosition(3.353f, -0.401f, 0.000003f);
+            getTransform().rotateByAxisWithPivot(90.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
         } catch (IOException e) {
             e.printStackTrace();
         }

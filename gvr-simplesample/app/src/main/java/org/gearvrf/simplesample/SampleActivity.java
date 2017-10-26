@@ -25,6 +25,12 @@ import org.gearvrf.GVRMain;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
+import org.gearvrf.animation.GVRAnimation;
+import org.gearvrf.animation.GVROnFinish;
+import org.gearvrf.animation.GVRRepeatMode;
+import org.gearvrf.scene_objects.GVRModelSceneObject;
+
+import java.io.IOException;
 
 public class SampleActivity extends GVRActivity {
 
@@ -40,17 +46,24 @@ public class SampleActivity extends GVRActivity {
             GVRScene scene = gvrContext.getMainScene();
             scene.setBackgroundColor(1, 1, 1, 1);
 
-            GVRTexture texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.gearvr_logo));
+            try {
+                GVRModelSceneObject button = gvrContext.getAssetLoader().loadModel("HoverButton_v3.fbx");
+                button.getTransform().setPosition(0, 0, -7);
+                button.getTransform().rotateByAxis(90, 1, 0, 0);
+                scene.addSceneObject(button);
 
-            // create a scene object (this constructor creates a rectangular scene
-            // object that uses the standard texture shader
-            GVRSceneObject sceneObject = new GVRSceneObject(gvrContext, 4.0f, 2.0f, texture);
+                button.getAnimations().get(3).setRepeatMode(GVRRepeatMode.REPEATED);
+                button.getAnimations().get(3).setRepeatCount(-1);
+                button.getAnimations().get(3).setOnFinish(new GVROnFinish() {
+                    @Override
+                    public void finished(GVRAnimation animation) {
 
-            // set the scene object position
-            sceneObject.getTransform().setPosition(0.0f, 0.0f, -3.0f);
+                    }
+                }).start(gvrContext.getAnimationEngine());
 
-            // add the scene object to the scene graph
-            scene.addSceneObject(sceneObject);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

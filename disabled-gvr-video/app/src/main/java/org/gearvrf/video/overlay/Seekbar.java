@@ -24,7 +24,7 @@ import org.gearvrf.GVRRenderData.GVRRenderMaskBit;
 import org.gearvrf.GVRRenderData.GVRRenderingOrder;
 import org.gearvrf.GVRSceneObject;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class Seekbar extends GVRSceneObject {
     private static final float WIDTH = 8.0f;
@@ -38,39 +38,35 @@ public class Seekbar extends GVRSceneObject {
     private GVRSceneObject mCurrentTime = null;
     private GVRSceneObject mDuration = null;
 
-    public Seekbar(GVRContext gvrContext) throws FileNotFoundException {
+    public Seekbar(GVRContext gvrContext) throws IOException {
         super(gvrContext);
         getTransform().setPosition(-0.1f, Y, -DEPTH);
 
         mPlayedSide = new GVRSceneObject(gvrContext, gvrContext.createQuad(
-                1.0f, 0.1f), gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource("seekbar/dark-gray.png")));
-        mPlayedSide.getRenderData().setRenderingOrder(
-                GVRRenderingOrder.TRANSPARENT + 2);
+                1.0f, 0.1f), gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "seekbar/dark-gray.png")));
+        mPlayedSide.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT + 2);
         mPlayedSide.getRenderData().setOffset(true);
         mPlayedSide.getRenderData().setOffsetFactor(-2.0f);
         mPlayedSide.getRenderData().setOffsetUnits(-2.0f);
 
         mLeftSide = new GVRSceneObject(gvrContext, gvrContext.createQuad(1.0f,
-                0.1f), gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource("seekbar/light-gray.png")));
-        mLeftSide.getRenderData().setRenderingOrder(
-                GVRRenderingOrder.TRANSPARENT + 2);
+                0.1f), gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "seekbar/light-gray.png")));
+        mLeftSide.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT + 2);
         mLeftSide.getRenderData().setOffset(true);
         mLeftSide.getRenderData().setOffsetFactor(-2.0f);
         mLeftSide.getRenderData().setOffsetUnits(-2.0f);
 
         mPointer = new GVRSceneObject(gvrContext, gvrContext.createQuad(0.08f,
-                0.3f), gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource("seekbar/dark-gray-circle.png")));
-        mPointer.getRenderData().setRenderingOrder(
-                GVRRenderingOrder.TRANSPARENT + 3);
+                0.3f), gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "seekbar/dark-gray-circle.png")));
+        mPointer.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT + 3);
         mPointer.getRenderData().setOffset(true);
         mPointer.getRenderData().setOffsetFactor(-3.0f);
         mPointer.getRenderData().setOffsetUnits(-3.0f);
 
         mGlow = new GVRSceneObject(gvrContext,
                 gvrContext.createQuad(8.8f, 0.5f),
-                gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource("seekbar/seekbar-glow.png")));
-        mGlow.getRenderData().setRenderingOrder(
-                GVRRenderingOrder.TRANSPARENT + 1);
+                gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, "seekbar/seekbar-glow.png")));
+        mGlow.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT + 1);
         mGlow.getRenderData().setOffset(true);
         mGlow.getRenderData().setOffsetFactor(-1.0f);
         mGlow.getRenderData().setOffsetUnits(-1.0f);
@@ -78,8 +74,7 @@ public class Seekbar extends GVRSceneObject {
         mCurrentTime = new GVRSceneObject(gvrContext, gvrContext.createQuad(
                 2.4f, 0.3f), TextFactory.create(gvrContext, "1111"));
         mCurrentTime.getTransform().setPosition(-3.2f, -0.3f, 0.0f);
-        mCurrentTime.getRenderData().setRenderingOrder(
-                GVRRenderingOrder.TRANSPARENT + 2);
+        mCurrentTime.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT + 2);
         mCurrentTime.getRenderData().setOffset(true);
         mCurrentTime.getRenderData().setOffsetFactor(-2.0f);
         mCurrentTime.getRenderData().setOffsetUnits(-2.0f);

@@ -54,7 +54,7 @@ public class IMAXMovieTheater extends MovieTheater {
             GVRTexture backgroundLightOnTexture = context.getAssetLoader().loadTexture(
                     new GVRAndroidResource(context, "imax/cinema_light_on.png"));
             GVRMesh backgroundRadiosity = context.getAssetLoader().loadMesh(new GVRAndroidResource(context, "imax/radiosity1.obj"));
-            backgroundMesh.setNormals(backgroundRadiosity.getVertices());
+//            backgroundMesh.setNormals(backgroundRadiosity.getVertices());
             background = new GVRSceneObject(context, backgroundMesh, backgroundLightOffTexture);
             background.getRenderData().setCullFace(GVRRenderPass.GVRCullFaceEnum.None);
             GVRMesh additiveMesh = context.getAssetLoader().loadMesh(
@@ -62,7 +62,7 @@ public class IMAXMovieTheater extends MovieTheater {
             GVRTexture additiveTexture = context.getAssetLoader().loadTexture(
                     new GVRAndroidResource(context, "imax/additive.png"));
             GVRMesh additiveRadiosity = context.getAssetLoader().loadMesh(new GVRAndroidResource(context, "imax/radiosity2.obj"));
-            additiveMesh.setNormals(additiveRadiosity.getVertices());
+//            additiveMesh.setNormals(additiveRadiosity.getVertices());
             additive = new GVRSceneObject(context, additiveMesh, additiveTexture);
             additive.getRenderData().setCullFace(GVRRenderPass.GVRCullFaceEnum.None);
             additive.getRenderData().setRenderingOrder(2500);

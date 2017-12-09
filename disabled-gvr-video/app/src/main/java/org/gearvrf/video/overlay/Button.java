@@ -15,6 +15,7 @@
 
 package org.gearvrf.video.overlay;
 
+import org.gearvrf.GVRBoxCollider;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMesh;
 import org.gearvrf.GVRRenderData;
@@ -26,25 +27,25 @@ public class Button extends FocusableSceneObject {
 
     public Button(GVRContext gvrContext, GVRMesh mesh, GVRTexture active, GVRTexture inactive) {
         super(gvrContext, mesh, inactive);
-        this.getRenderData().getMaterial().setTexture("active_texture", active);
-        this.getRenderData().getMaterial().setTexture("inactive_texture", inactive);
-        this.getRenderData().setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT + 1);
-        this.getRenderData().setOffset(true);
-        this.getRenderData().setOffsetFactor(-1.0f);
-        this.getRenderData().setOffsetUnits(-1.0f);
-        this.attachEyePointeeHolder();
+
+        final GVRRenderData renderData = getRenderData();
+        renderData.getMaterial().setTexture("active_texture", active);
+        renderData.getMaterial().setTexture("inactive_texture", inactive);
+        renderData.setRenderingOrder(GVRRenderData.GVRRenderingOrder.TRANSPARENT + 1);
+        renderData.setOffset(true).setOffsetFactor(-1.0f).setOffsetUnits(-1.0f);
+        attachCollider(new GVRBoxCollider(gvrContext));
 
         super.setFocusListener(new FocusListener() {
             @Override
             public void gainedFocus(FocusableSceneObject object) {
-                getRenderData().getMaterial().setMainTexture(
-                        getRenderData().getMaterial().getTexture("active_texture"));
+                renderData.getMaterial().setMainTexture(
+                        renderData.getMaterial().getTexture("active_texture"));
             }
 
             @Override
             public void lostFocus(FocusableSceneObject object) {
-                getRenderData().getMaterial().setMainTexture(
-                        getRenderData().getMaterial().getTexture("inactive_texture"));
+                renderData.getMaterial().setMainTexture(
+                        renderData.getMaterial().getTexture("inactive_texture"));
             }
         });
     }
@@ -56,11 +57,11 @@ public class Button extends FocusableSceneObject {
     public void show() {
         getRenderData().setRenderMask(
                 GVRRenderData.GVRRenderMaskBit.Left | GVRRenderData.GVRRenderMaskBit.Right);
-        getEyePointeeHolder().setEnable(true);
+        getCollider().setEnable(true);
     }
 
     public void hide() {
         getRenderData().setRenderMask(0);
-        getEyePointeeHolder().setEnable(false);
+        getCollider().setEnable(false);
     }
 }

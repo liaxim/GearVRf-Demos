@@ -15,7 +15,6 @@
 
 package org.gearvrf.video;
 
-import org.gearvrf.GVRActivity;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRPicker;
@@ -29,19 +28,14 @@ import org.gearvrf.video.overlay.OverlayUI;
 public class VideoMain extends GVRMain {
 
     private GVRContext mGVRContext = null;
-    private GVRActivity mActivity = null;
-
     private MovieManager mMovieManager = null;
     private OverlayUI mOverlayUI = null;
 
     private boolean mIsOverlayVisible = false;
 
-    private GVRPicker mPicker = null;
+    @SuppressWarnings("unused")
+    private GVRPicker mPicker;
     private FocusableController focusableController = null;
-
-    VideoMain(GVRActivity activity) {
-        mActivity = activity;
-    }
 
     @Override
     public void onInit(GVRContext gvrContext) {

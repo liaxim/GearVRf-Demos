@@ -23,7 +23,7 @@
         framebufferPixelsWide="DEFAULT"
         showLoadingIcon="true"
         useProtectedFramebuffer="false"
-        useAndroidWearTouchpad="true"
+        useAndroidWearTouchpad="false"
         useSrgbFramebuffer="false" >
 
         <mono-mode-parms
@@ -31,9 +31,9 @@
             monoMode="false" />
 
         <mode-parms
-            allowPowerSave="true"
-            cpuLevel="2"
-            gpuLevel="2"
+            allowPowerSave="false"
+            cpuLevel="3"
+            gpuLevel="3"
             resetWindowFullScreen="true" />
 
         <eye-buffer-parms

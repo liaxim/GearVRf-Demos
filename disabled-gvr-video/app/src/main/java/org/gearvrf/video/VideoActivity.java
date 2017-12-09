@@ -27,7 +27,7 @@ public class VideoActivity extends GVRActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mMain = new VideoMain(this);
+        mMain = new VideoMain();
         setMain(mMain, "gvr.xml");
     }
 

@@ -55,6 +55,10 @@ public class RadiosityShader extends GVRShader {
             + "}\n";
 
     private static final String FRAGMENT_SHADER = "" //
++"#extension GL_ARB_separate_shader_objects : enable"
++"#extension GL_ARB_shading_language_420pack : enable"
++"#extension GL_OES_EGL_image_external : enable"
++"#extension GL_OES_EGL_image_external_essl3 : enable"
             + "precision highp float;\n"
             + "uniform sampler2D u_texture_off;\n"
             + "uniform sampler2D u_texture_on;\n"
@@ -70,7 +74,8 @@ public class RadiosityShader extends GVRShader {
             + "  if( u_weight < 0.999 ) { color1 = bg*(u_lightness*(1.0-0.4*depth)*v_screen_color); }\n"
             + "  if( u_weight > 0.001 ) { color2 = bg*0.15; }\n"
             + "  float alpha = min( 1.0, 2.0 - u_weight);\n"
-            + "  FragColor = vec4( u_fade*(color1*(1.0-u_weight)+color2*u_weight), alpha);\n"
+            //+ "  FragColor = vec4( u_fade*(color1*(1.0-u_weight)+color2*u_weight), alpha);\n"
+            + "  FragColor = bg;\n"
             + "}\n";
 
     public RadiosityShader(GVRContext gvrContext) {

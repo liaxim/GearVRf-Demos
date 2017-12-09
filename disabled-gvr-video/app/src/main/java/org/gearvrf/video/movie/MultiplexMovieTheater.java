@@ -18,6 +18,7 @@ package org.gearvrf.video.movie;
 import android.media.MediaPlayer;
 
 import org.gearvrf.GVRAndroidResource;
+import org.gearvrf.GVRAssetLoader;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRExternalTexture;
 import org.gearvrf.GVRMaterial;
@@ -48,33 +49,31 @@ public class MultiplexMovieTheater extends MovieTheater {
         super(context);
         try {
             // background
-            GVRMesh backgroundMesh = context.getAssetLoader().loadMesh(
+            final GVRAssetLoader assetLoader = context.getAssetLoader();
+            GVRMesh backgroundMesh = assetLoader.loadMesh(
                     new GVRAndroidResource(context, "multiplex/theater_background.obj"));
-            GVRTexture backgroundLightOffTexture = context.getAssetLoader().loadTexture(
+            GVRTexture backgroundLightOffTexture = assetLoader.loadTexture(
                     new GVRAndroidResource(context, "multiplex/theater_background_light_off.jpg"));
-            GVRTexture backgroundLightOnTexture = context.getAssetLoader().loadTexture(
+            GVRTexture backgroundLightOnTexture = assetLoader.loadTexture(
                     new GVRAndroidResource(context, "multiplex/theater_background_light_on.jpg"));
-            background = new GVRSceneObject(context, backgroundMesh, backgroundLightOffTexture);
+
+            background = new GVRSceneObject(context, backgroundMesh, backgroundLightOffTexture, new GVRShaderId(RadiosityShader.class));
             background.setName("background");
             background.getRenderData().setCullFace(GVRRenderPass.GVRCullFaceEnum.None);
-            // radiosity
-            RadiosityShader radiosityShader = new RadiosityShader(context);
-           // background.getRenderData().getMaterial().set(radiosityShader.getShaderId());
-            background.getRenderData().setMaterial(new GVRMaterial(context, new GVRShaderId(RadiosityShader.class)));
-            background.getRenderData().getMaterial().setTexture(
-                    RadiosityShader.TEXTURE_OFF_KEY, backgroundLightOffTexture);
-            background.getRenderData().getMaterial().setTexture(
-                    RadiosityShader.TEXTURE_ON_KEY, backgroundLightOnTexture);
-            background.getRenderData().getMaterial().setTexture(
-                    RadiosityShader.SCREEN_KEY, screenTexture);
-            // screen
-            GVRMesh screenMesh = context.getAssetLoader().loadMesh(new GVRAndroidResource(
-                    context, "multiplex/screen.obj"));
-            screen = new GVRVideoSceneObject(context, screenMesh, player,
-                    screenTexture, GVRVideoSceneObject.GVRVideoType.MONO);
+
+            background.getRenderData().getMaterial().setTexture(RadiosityShader.TEXTURE_OFF_KEY, backgroundLightOffTexture);
+            background.getRenderData().getMaterial().setTexture(RadiosityShader.TEXTURE_ON_KEY, backgroundLightOnTexture);
+            background.getRenderData().getMaterial().setTexture(RadiosityShader.SCREEN_KEY, screenTexture);
+
+////            GVRMaterial mat = new GVRMaterial(getGVRContext());
+////            mat.setMainTexture(backgroundLightOffTexture);
+//            background.getRenderData().setMaterial(mat);
+            GVRMesh screenMesh = assetLoader.loadMesh(new GVRAndroidResource(context, "multiplex/screen.obj"));
+            screen = new GVRVideoSceneObject(context, screenMesh, player, screenTexture, GVRVideoSceneObject.GVRVideoType.MONO);
             screen.getRenderData().setCullFace(GVRRenderPass.GVRCullFaceEnum.None);
-            this.addChildObject(background);
-            this.addChildObject(screen);
+
+            addChildObject(background);
+            addChildObject(screen);
         } catch (IOException e) {
             e.printStackTrace();
         }

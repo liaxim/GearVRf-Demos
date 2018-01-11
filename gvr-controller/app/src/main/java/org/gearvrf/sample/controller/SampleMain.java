@@ -313,7 +313,8 @@ public class SampleMain extends GVRMain
 
     float f = 0;
     public void onTouch() {
-        getGVRContext().getMainScene().getMainCameraRig().getTransform().setRotationByAxis(f, 0.0f, 1.0f, 0.0f);
+//        getGVRContext().getMainScene().getMainCameraRig().getTransform().setRotationByAxis(f, 0.0f, 1.0f, 0.0f);
         f += 0.1f;
+        getGVRContext().getMainScene().getMainCameraRig().getTransform().setPosition(f, 0, 0);
     }
 }

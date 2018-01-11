@@ -28,4 +28,10 @@ public class SampleActivity extends GVRActivity {
         main = new SampleMain(this);
         setMain(main, "gvr.xml");
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        main.onTouch();
+        return true;
+    }
 }

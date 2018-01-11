@@ -15,12 +15,15 @@
 package org.gearvrf.sample.controller;
 
 import java.io.IOException;
+import java.util.EnumSet;
 
 import org.gearvrf.GVRActivity;
 import org.gearvrf.GVRAndroidResource;
 import org.gearvrf.GVRAssetLoader;
+import org.gearvrf.GVRCameraRig;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRCursorController;
+import org.gearvrf.GVRDrawFrameListener;
 import org.gearvrf.GVREventListeners;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
@@ -100,6 +103,10 @@ public class SampleMain extends GVRMain
                 newController.setCursor(cursor);
                 newController.setCursorDepth(DEPTH);
                 newController.setCursorControl(GVRCursorController.CursorControl.PROJECT_CURSOR_ON_SURFACE);
+
+                GVRPicker picker = newController.getPicker();
+                EnumSet<GVRPicker.EventOptions> eventOptions = picker.getEventOptions();
+                eventOptions.add(GVRPicker.EventOptions.SEND_TO_HIT_OBJECT);
             }
         });
 
@@ -302,5 +309,11 @@ public class SampleMain extends GVRMain
     private void attachBoundsCollider(GVRSceneObject sceneObject)
     {
         sceneObject.attachComponent(new GVRMeshCollider(mGVRContext, true));
+    }
+
+    float f = 0;
+    public void onTouch() {
+        getGVRContext().getMainScene().getMainCameraRig().getTransform().setRotationByAxis(f, 0.0f, 1.0f, 0.0f);
+        f += 0.1f;
     }
 }

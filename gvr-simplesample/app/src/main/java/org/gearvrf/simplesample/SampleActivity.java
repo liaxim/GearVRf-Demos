@@ -21,10 +21,22 @@ import org.gearvrf.GVRActivity;
 import org.gearvrf.GVRAndroidResource;
 import org.gearvrf.GVRCameraRig;
 import org.gearvrf.GVRContext;
+import org.gearvrf.GVRDirectLight;
+import org.gearvrf.GVREventListeners;
+import org.gearvrf.GVRImportSettings;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
+import org.gearvrf.IAssetEvents;
+import org.gearvrf.scene_objects.GVRModelSceneObject;
+
+import java.io.IOException;
+import java.util.EnumSet;
+
+import static org.gearvrf.GVRImportSettings.CALCULATE_NORMALS;
+import static org.gearvrf.GVRImportSettings.CALCULATE_SMOOTH_NORMALS;
+import static org.gearvrf.GVRImportSettings.TRIANGULATE;
 
 public class SampleActivity extends GVRActivity {
 
@@ -36,21 +48,32 @@ public class SampleActivity extends GVRActivity {
 
     private static class SampleMain extends GVRMain {
         @Override
-        public void onInit(GVRContext gvrContext) {
+        public void onInit(GVRContext gvrContext) throws IOException {
             GVRScene scene = gvrContext.getMainScene();
             scene.setBackgroundColor(1, 1, 1, 1);
 
-            GVRTexture texture = gvrContext.getAssetLoader().loadTexture(new GVRAndroidResource(gvrContext, R.drawable.gearvr_logo));
+            GVRDirectLight sunLight = new GVRDirectLight(gvrContext);
+            sunLight.setAmbientIntensity(0.8f, 0.8f, 0.8f, 1.0f);
+            sunLight.setDiffuseIntensity(0.9f, 0.9f, 0.9f, 1.0f);
+            GVRSceneObject so = new GVRSceneObject(gvrContext);
+            so.attachComponent(sunLight);
+            so.getTransform().setPosition(0, 4, -35);
+            scene.addSceneObject(so);
 
-            // create a scene object (this constructor creates a rectangular scene
-            // object that uses the standard texture shader
-            GVRSceneObject sceneObject = new GVRSceneObject(gvrContext, 4.0f, 2.0f, texture);
+//            EnumSet<GVRImportSettings> importSettings = GVRImportSettings.getRecommendedSettingsWith(EnumSet.of(CALCULATE_NORMALS));
+            EnumSet<GVRImportSettings> importSettings = EnumSet.of(CALCULATE_NORMALS, TRIANGULATE);
+            gvrContext.getAssetLoader().loadModel("CUPIC_SUBMARINE.obj", importSettings, true, null);
 
-            // set the scene object position
-            sceneObject.getTransform().setPosition(0.0f, 0.0f, -3.0f);
-
-            // add the scene object to the scene graph
-            scene.addSceneObject(sceneObject);
+            gvrContext.getEventReceiver().addListener(new GVREventListeners.AssetEvents() {
+                @Override
+                public void onAssetLoaded(GVRContext context, GVRSceneObject model, String filePath, String errors) {
+                    model.getTransform()
+                            .setRotationByAxis(45, 0, 1, 0)
+                            .setScale(0.1f, 0.1f, 0.1f)
+                            .setPositionZ(-40f);
+                    getGVRContext().getMainScene().addSceneObject(model);
+                }
+            });
         }
     }
 }

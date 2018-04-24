@@ -30,7 +30,9 @@ public class MenuImageShader extends GVRShader {
     public static final String TEXTURE_SWITCH = "textureSwitch";
 
     public MenuImageShader(GVRContext gvrContext) {
-        super("float textureSwitch float u_opacity", "sampler2D state1 sampler2D state2 ", "float4 a_position, float2 a_texcoord", GLSLESVersion.VULKAN);
+        super("float textureSwitch, float u_opacity",
+                "sampler2D state1, sampler2D state2",
+                "float3 a_position, float2 a_texcoord", GLSLESVersion.VULKAN);
 
         Context context = gvrContext.getContext();
         setSegment("FragmentTemplate", TextFile.readTextFile(context, R.raw.menu_image_shader_fragment));
@@ -41,6 +43,6 @@ public class MenuImageShader extends GVRShader {
     protected void setMaterialDefaults(GVRShaderData material)
     {
         material.setFloat("textureSwitch", 1);
-        material.setFloat("u_opacity", 1);
+        material.setFloat("u_opacity", 1f);
     }
 }

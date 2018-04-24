@@ -15,6 +15,8 @@
 
 package org.gearvrf.immersivepedia.util;
 
+import org.gearvrf.GVRRenderData;
+
 public class RenderingOrderApplication {
 
     public static final int BUTTON_BOARD = 11110000;
@@ -28,8 +30,12 @@ public class RenderingOrderApplication {
     public static int GALLERY_SCROLLBAR = 1000;
     public static int TOTEM = 800;
 
-    public static final int BACKGROUND_IMAGE = 1;
-    public static final int MAIN_IMAGE = 2;
-    public static final int IMAGE_TEXT_BACKGROUND = 3;
-    public static final int IMAGE_TEXT = 4;
+//    public static final int BACKGROUND_IMAGE = 1;
+//    public static final int MAIN_IMAGE = 2;
+//    public static final int IMAGE_TEXT_BACKGROUND = 3;
+//    public static final int IMAGE_TEXT = 4;
+    public static final int BACKGROUND_IMAGE = GVRRenderData.GVRRenderingOrder.TRANSPARENT;
+    public static final int MAIN_IMAGE = GVRRenderData.GVRRenderingOrder.TRANSPARENT;
+    public static final int IMAGE_TEXT_BACKGROUND = GVRRenderData.GVRRenderingOrder.TRANSPARENT;
+    public static final int IMAGE_TEXT = GVRRenderData.GVRRenderingOrder.TRANSPARENT + 1;
 }

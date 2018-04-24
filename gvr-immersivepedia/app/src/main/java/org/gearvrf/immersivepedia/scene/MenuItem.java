@@ -34,6 +34,8 @@ import org.gearvrf.immersivepedia.shader.MenuImageShader;
 import org.gearvrf.immersivepedia.util.AudioClip;
 import org.gearvrf.immersivepedia.util.RenderingOrderApplication;
 import org.gearvrf.scene_objects.GVRTextViewSceneObject;
+import org.gearvrf.shaders.GVRColorShader;
+import org.gearvrf.shaders.GVRPhongShader;
 
 public class MenuItem extends FocusableSceneObject {
 
@@ -83,8 +85,8 @@ public class MenuItem extends FocusableSceneObject {
         frontObj.getRenderData().setRenderingOrder(RenderingOrderApplication.MAIN_IMAGE);
         scale = (MenuScene.DISTANCE_TO_CAMERA - FRONT_IMAGE_Z_OFFSET) / MenuScene.DISTANCE_TO_CAMERA;
         frontObj.getTransform().setScale(scale, scale, scale);
-        backgroundObj = createSceneObject(backgroundIdleRes, backgroundHoverRes);
-        backgroundObj.getRenderData().setRenderingOrder(RenderingOrderApplication.BACKGROUND_IMAGE);
+//        backgroundObj = createSceneObject(backgroundIdleRes, backgroundHoverRes);
+//        backgroundObj.getRenderData().setRenderingOrder(RenderingOrderApplication.BACKGROUND_IMAGE);
 
         GVRMeshCollider collider = new GVRMeshCollider(gvrContext, false);
 
@@ -98,7 +100,7 @@ public class MenuItem extends FocusableSceneObject {
             @Override
             public void lostFocus(FocusableSceneObject object) {
                 frontObj.getRenderData().getMaterial().setFloat(MenuImageShader.TEXTURE_SWITCH, IDLE_STATE);
-                backgroundObj.getRenderData().getMaterial().setFloat(MenuImageShader.TEXTURE_SWITCH, IDLE_STATE);
+//                backgroundObj.getRenderData().getMaterial().setFloat(MenuImageShader.TEXTURE_SWITCH, IDLE_STATE);
                 hideText();
                 scaleSmaller();
             }
@@ -115,7 +117,7 @@ public class MenuItem extends FocusableSceneObject {
             public void gainedFocus(FocusableSceneObject object) {
                 AudioClip.getInstance(getGVRContext().getContext()).playSound(AudioClip.getUIMenuHoverSoundID(), 1.0f, 1.0f);
                 frontObj.getRenderData().getMaterial().setFloat(MenuImageShader.TEXTURE_SWITCH, HOVER_STATE);
-                backgroundObj.getRenderData().getMaterial().setFloat(MenuImageShader.TEXTURE_SWITCH, HOVER_STATE);
+//                backgroundObj.getRenderData().getMaterial().setFloat(MenuImageShader.TEXTURE_SWITCH, HOVER_STATE);
                 showText();
                 scaleBiger();
             }
@@ -147,10 +149,14 @@ public class MenuItem extends FocusableSceneObject {
 
         obj.attachRenderData(new GVRRenderData(getGVRContext()));
         obj.getRenderData().setMaterial(new GVRMaterial(getGVRContext(), new GVRShaderId(MenuImageShader.class)));
+//        obj.getRenderData().setMaterial(new GVRMaterial(getGVRContext(), new GVRShaderId(GVRPhongShader.class)));
+
         obj.getRenderData().setMesh(getGVRContext().createQuad(CHILD_WIDTH, CHILD_HEIGHT));
         obj.getRenderData().getMaterial().setTexture(MenuImageShader.STATE1_TEXTURE, idle);
         obj.getRenderData().getMaterial().setTexture(MenuImageShader.STATE2_TEXTURE, hover);
-        obj.getRenderData().getMaterial().setFloat(MenuImageShader.TEXTURE_SWITCH, IDLE_STATE);
+//        obj.getRenderData().getMaterial().setFloat(MenuImageShader.TEXTURE_SWITCH, IDLE_STATE);
+        //obj.getRenderData().getMaterial().setVec3("u_color", 1, 0, 1);
+//        obj.getRenderData().getMaterial().setMainTexture(idle);
 
         addChildObject(obj);
 
